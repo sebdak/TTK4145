@@ -1,0 +1,7 @@
+Master is the most stable version
+
+Develop is where where we first merge new features once they are done
+
+Branch out from develop to start any new feature
+
+Once feature is done, merge with develop and make a pull request on the github site
