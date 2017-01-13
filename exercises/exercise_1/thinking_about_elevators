@@ -1,0 +1,9 @@
+Thinking about elevators
+
+- Watch dog running in the background. If the watch dog crashes, try restarting itself. If not, critical error, system shutdown.
+- Implemet heartbeat message that the threads sends between each other
+- Make sure to get acknowledge 
+- Make sure heartbeat message is received
+- Troll?
+- Make "max timer". if story not reached within the time frame, give order to other elevator and create error message. 
+-
