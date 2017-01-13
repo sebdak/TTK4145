@@ -1,0 +1,10 @@
+- Concurrency allows processes to run samultaniously by allowing them to run a little bit at a time. parallelism is processes running at the exact same time on different cores of the processor.
+- Adding more cores allows for parallelism, increasing performance while keeping the cpu frequency the same. Increasing the frequency draws more power. Some of the cores are optimized to perform certain tasks. 
+- Concurrency is good for programs that waits for interrupts or that have tasks that hangs or takes long time to execute.
+- A process is the "program", and a thread is a path of execution within the process.
+- A green thread is a "emulated" thread in a processor that does not natively support multithreading.
+- A coroutine is routine that can be executed and set on hold allowing another coroutine to execute based on priority. it runs on one thread and shares variables with other coroutines. It suspends execution of one coroutine only when told to.
+- They create threads
+- CPython's GIL is a routine that prevets multiple native threads to execute code at once. This is because pythons memory management is not thread-safe.
+- U can use another python interpreter that works around the GIL, for instance jython.
+- GOMAXPROCS enables parallelism by allowing the program to use more than one core.
