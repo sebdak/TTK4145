@@ -4,21 +4,31 @@
 #include <pthread.h>
 #include <stdio.h>
 
+pthread_mutex_t lock;
+
 int count = 0;
 // Note the return type: void*
 void* someThreadFunction(){
-	int i;
+	pthread_mutex_lock(&lock);
+
+    int i;
     for(i = 0; i < 1000000; ++i){
     	count++;
     }
+
+    pthread_mutex_unlock(&lock);
     return NULL;
 }
 
 void* someThreadFunction2(){
+    pthread_mutex_lock(&lock);
+
     int i;
     for(i = 0; i < 1000000; ++i){
     	count--;
     }
+
+    pthread_mutex_unlock(&lock);
     return NULL;
 }
 
