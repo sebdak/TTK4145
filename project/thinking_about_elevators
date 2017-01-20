@@ -1,9 +1,43 @@
 Thinking about elevators
 
 - Watch dog running in the background. If the watch dog crashes, try restarting itself. If not, critical error, system shutdown. https://mmonit.com/monit/
-- Implemet heartbeat message that the threads sends between each other
+- Implemet heartbeat message between elevators/watchdogs
 - Make sure to get acknowledge 
 - Make sure heartbeat message is received
 - Troll?
 - Make "max timer". if story not reached within the time frame, give order to other elevator and create error message. 
--
+
+
+Scenario watchdog & heis kræsjer
+!Watchdog klarer å skille mellom nettverkskræsj og vanlig kræsj fordi den sjekker om heisen fortsatt sender på UDP.
+- Watchdog får ikke heartbeat message og prøver å restarte prosessen.
+	- Prøver regelmessig å restarte prosessen, evt. må teknisk personal varsles.
+
+Scenario heisene mottar ikke heartbeat fra en heis
+- Del den heisens ordre mellom gjenværende heiser
+- Sett heis som er frakoblet i single-heis-operator-mode
+
+Scenario heisen kommer online igjen
+- Optimalisert fordeling av ordre.
+
+Scenario interne vs eksterne ordre
+- En heis får en intern order, men eksterne må jo prioriteres. 
+- State machine
+
+Scenario tildeling av ordre
+Heisen med billigst kostnad til ordreetasje får oppdraget. Etter dette finner man ut hvor i heisens internkø ordren skal.
+Forslag til kostnader
+Retning: 
+Antall stopp før ordreetasje: 
+Avstand fra heisetasje til ordreetasje:
+
+Scenario en etasje blir aldri nådd
+- Timer som sier at neste etasje SKAL bli nådd innen så, så lang tid. Hvis ikke frigis heisens eksternordre til de andre, og internordre fjernes.
+
+Modellstruktur
+* Errorhandler? Feil, troll, nettverk
+
+
+Spørsmål til studass
+- Man går ut fra at kun et problem oppstår om gangen og evt. fikses
+før neste oppstår?
