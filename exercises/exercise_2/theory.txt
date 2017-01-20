@@ -1,0 +1,11 @@
+- Atomic operation:
+	A program operation running independently of other processes.
+
+- Semaphore:
+	Decides hos many should have access to a resource at one point
+
+- Mutex:
+	exclusive-member access to a resource
+
+- Critical section:
+	Piece of code that only one thread can execute. To prevent race condition.
