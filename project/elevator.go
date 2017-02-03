@@ -3,15 +3,20 @@ package main
 import (
 	constants "./constants"
 	driver "./driver"
+	//timer
 )
 
+
+
+var lastFloor int
+var orderedFloor int
 var State constants.ElevatorState 
 
 func main() {
 	initElev()
-	//fmt.Println("hello world")
+	
 	for {
-		
+		//switch	
 	}
 }
 
@@ -36,6 +41,7 @@ func initElev() {
 	for (driver.GetFloorSensor() != 0) {}
 
 	setDirection(constants.DIR_STOP)
+	//Go online	
 	State = constants.AT_FLOOR
 }
 
@@ -43,4 +49,7 @@ func setDirection(dir constants.ElevatorDirection){
 	driver.SetMotorDir(dir)
 }
 
-
+func goToFloor(floor int) {
+	//start timer
+	
+}
