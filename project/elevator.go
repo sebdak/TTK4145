@@ -1,15 +1,14 @@
 package main
 
 import (
+	constants "./constants"
 	driver "./driver"
-	"fmt"
 )
 
-var State elevatorState
 
 func main() {
-	initE()
-	fmt.Println("hello world")
+	initElev()
+	//fmt.Println("hello world")
 	for {
 		
 	}
@@ -27,9 +26,16 @@ func Reboot() {
 
 }
 
-func initE() {
+func initElev() {
 	driver.InitElev()
-	driver.SetFloorIndicator(2)
+	if (driver.GetFloorSensor() != 0) {
+		setDirection(constants.DIR_DOWN)
+	}
+	for (driver.GetFloorSensor() != 0) {}
+
+	setDirection(constants.DIR_STOP)
 }
 
-
+func setDirection(dir constants.ElevatorDirection){
+	driver.SetMotorDir(dir)
+}

@@ -7,23 +7,16 @@ package driver
 #include "elevIO.h"
 */
 import "C"
+import constants "../constants"
 
 type Elev_button_type_t int
-type Elev_motor_direction_t int
-type ElevatorType int
-
-/*
-func InitElev(elevType ElevatorType) int {
-	return int(C.elev_init(C.ElevatorType(elevType)))
-}
-*/
 
 func InitElev() {
 	C.elev_init()
 }
 
-func SetMotorDir(dirn Elev_motor_direction_t) {
-	C.elev_set_motor_direction(C.elev_motor_direction_t(dirn))
+func SetMotorDir(dir constants.ElevatorDirection) {
+	C.elev_set_motor_direction(C.elev_motor_direction_t(dir))
 }
 
 func GetFloorSensor() int {
