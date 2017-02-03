@@ -1,6 +1,7 @@
-package cwrapper
+package driver
 /*
-#cgo CFLAGS: -std=c99 -Ilib
+#cgo CFLAGS: -std=c99 -Ilib 
+#cgo LDFLAGS: -lcomedi -lm
 #include "io.h"
 #include "channels.h"
 #include "elevIO.h"
@@ -11,8 +12,14 @@ type Elev_button_type_t int
 type Elev_motor_direction_t int
 type ElevatorType int
 
+/*
 func InitElev(elevType ElevatorType) int {
 	return int(C.elev_init(C.ElevatorType(elevType)))
+}
+*/
+
+func InitElev() {
+	C.elev_init()
 }
 
 func SetMotorDir(dirn Elev_motor_direction_t) {
