@@ -3,7 +3,7 @@ package cwrapper
 #cgo CFLAGS: -std=c99 -Ilib
 #include "io.h"
 #include "channels.h"
-#include "elev.h"
+#include "elevIO.h"
 */
 import "C"
 
