@@ -5,6 +5,7 @@ import (
 	driver "./driver"
 )
 
+var State constants.ElevatorState 
 
 func main() {
 	initElev()
@@ -27,6 +28,7 @@ func Reboot() {
 }
 
 func initElev() {
+	State = constants.INITIALIZING
 	driver.InitElev()
 	if (driver.GetFloorSensor() != 0) {
 		setDirection(constants.DIR_DOWN)
@@ -34,8 +36,11 @@ func initElev() {
 	for (driver.GetFloorSensor() != 0) {}
 
 	setDirection(constants.DIR_STOP)
+	State = constants.AT_FLOOR
 }
 
 func setDirection(dir constants.ElevatorDirection){
 	driver.SetMotorDir(dir)
 }
+
+
