@@ -55,6 +55,9 @@ func SetNextOrder(floor int) {
 
 func orderedFloorReachedRoutine() {
 	driver.SetMotorDir(constants.DirStop)
+	driver.SetButtonLamp(constants.ButtonCallUp, lastFloor, 0)
+	driver.SetButtonLamp(constants.ButtonCallDown, lastFloor, 0)
+	driver.SetButtonLamp(constants.ButtonCommand, lastFloor, 0)
 	//Tell queue ordered has been handled and ask for new order
 	//Set door open light and start floortimer
 
@@ -85,7 +88,6 @@ func initElev() {
 
 func goToOrderedFloor() {
 	//start timer
-
 	if lastFloor > orderedFloor {
 		driver.SetMotorDir(constants.DirDown)
 	} else {
@@ -109,15 +111,19 @@ func lookForButtonPress() {
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
 
 			if driver.GetButtonSignal(constants.ButtonCommand, floor) == 1 {
+				driver.SetButtonLamp(constants.ButtonCommand, floor, 1)
 				SetNextOrder(floor)
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
+				driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
+
 				fmt.Println("Oppsignal fra etasje: %d", floor)
 
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
+				driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
 				fmt.Println("Nedsignal fra etasje: %d", floor)
 
 			}
