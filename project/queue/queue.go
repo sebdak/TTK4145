@@ -1,21 +1,30 @@
 package queue
 
 import (
-//constants "../constants"
-//"container/list"
+	constants "../constants"
+	//"container/list"
+	"fmt"
+	"time"
 )
 
 //var internalQueue [constants.NumberOfElevators]List
 //var externalQueue [constants.NumberOfElevators]List
 
-var nextFloorChannel *chan int
+var nextFloorChannel chan constants.InternalFloorOrder
 
-func InitQueue(nextFloorCh *chan int) {
+func InitQueue(nextFloorCh chan constants.InternalFloorOrder) {
 	nextFloorChannel = nextFloorCh
+	go lookForNewInternalOrder()
 }
 
-func addInternalFloorOrder() {
+func lookForNewInternalOrder() {
+	for {
 
+		newOrder := <-nextFloorChannel
+		fmt.Println("Received order ", newOrder.Floor, newOrder.Direction)
+
+		time.Sleep(time.Millisecond)
+	}
 }
 
 func calculateCost() int {

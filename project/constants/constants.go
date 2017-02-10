@@ -20,7 +20,12 @@ const (
 )
 
 const (
-	ButtonCallUp   ElevatorButton = 0
-	ButtonCallDown                = 1
-	ButtonCommand                 = 2
+	ButtonCallUp ElevatorButton = 0 + iota
+	ButtonCallDown
+	ButtonCommand
 )
+
+type InternalFloorOrder struct {
+	Floor     int
+	Direction ElevatorDirection
+}
