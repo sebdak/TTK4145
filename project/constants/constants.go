@@ -1,16 +1,25 @@
 package constants
 
+var NumberOfFloors = 4
+
 type ElevatorState int
 type ElevatorDirection int
+type ElevatorButton int
 
 const (
-	INITIALIZING ElevatorState = 1 + iota
-	AT_FLOOR
-	MOVING
+	Initializing ElevatorState = 1 + iota
+	AtFloor
+	Moving
 )
 
 const (
-	DIR_DOWN ElevatorDirection = -1
-	DIR_STOP = 0
-	DIR_UP = 1
+	DirUp   ElevatorDirection = 1
+	DirStop                   = 0
+	DirDown                   = -1
+)
+
+const (
+	ButtonCallUp   ElevatorButton = 0
+	ButtonCallDown                = 1
+	ButtonCommand                 = 2
 )

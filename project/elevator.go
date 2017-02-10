@@ -3,25 +3,61 @@ package main
 import (
 	constants "./constants"
 	driver "./driver"
+	"fmt"
+	"time"
 	//timer
 )
 
-
-
 var lastFloor int
 var orderedFloor int
-var State constants.ElevatorState 
+var State constants.ElevatorState
 
 func main() {
 	initElev()
-	
+
 	for {
-		//switch	
+		switch State {
+		case constants.Initializing:
+			//Reboot or something
+			break
+
+		case constants.AtFloor:
+			if lastFloor != orderedFloor {
+				goToOrderedFloor()
+				State = constants.Moving
+			}
+
+			break
+
+		case constants.Moving:
+			lookForChangeInFloor()
+			if lastFloor == orderedFloor && driver.GetFloorSensor() != -1 {
+				orderedFloorReachedRoutine()
+				State = constants.AtFloor
+			}
+
+			break
+		}
+
+		time.Sleep(time.Millisecond)
 	}
 }
 
+func debug() {
+	fmt.Println("Yo")
+}
+
 func SetNextOrder(floor int) {
-	
+
+	orderedFloor = floor
+
+}
+
+func orderedFloorReachedRoutine() {
+	driver.SetMotorDir(constants.DirStop)
+	//Tell queue ordered has been handled and ask for new order
+	//Set door open light and start floortimer
+
 }
 
 func ReadState() {
@@ -33,23 +69,61 @@ func Reboot() {
 }
 
 func initElev() {
-	State = constants.INITIALIZING
+	State = constants.Initializing
 	driver.InitElev()
-	if (driver.GetFloorSensor() != 0) {
-		setDirection(constants.DIR_DOWN)
+	if driver.GetFloorSensor() != 0 {
+		driver.SetMotorDir(constants.DirDown)
 	}
-	for (driver.GetFloorSensor() != 0) {}
+	for driver.GetFloorSensor() != 0 {
+	}
 
-	setDirection(constants.DIR_STOP)
-	//Go online	
-	State = constants.AT_FLOOR
+	driver.SetMotorDir(constants.DirStop)
+	//Go online
+	State = constants.AtFloor
+	go lookForButtonPress()
 }
 
-func setDirection(dir constants.ElevatorDirection){
-	driver.SetMotorDir(dir)
-}
-
-func goToFloor(floor int) {
+func goToOrderedFloor() {
 	//start timer
-	
+
+	if lastFloor > orderedFloor {
+		driver.SetMotorDir(constants.DirDown)
+	} else {
+		driver.SetMotorDir(constants.DirUp)
+	}
+
+}
+
+func lookForChangeInFloor() {
+	var currentFloorSignal = driver.GetFloorSensor()
+	if currentFloorSignal != -1 && lastFloor != currentFloorSignal {
+
+		lastFloor = currentFloorSignal
+		driver.SetFloorIndicator(lastFloor)
+
+	}
+}
+
+func lookForButtonPress() {
+	for {
+		for floor := 0; floor < constants.NumberOfFloors; floor++ {
+
+			if driver.GetButtonSignal(constants.ButtonCommand, floor) == 1 {
+				SetNextOrder(floor)
+			}
+
+			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
+				fmt.Println("Oppsignal fra etasje: %d", floor)
+
+			}
+
+			if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
+				fmt.Println("Nedsignal fra etasje: %d", floor)
+
+			}
+
+		}
+
+		time.Sleep(time.Millisecond * 10)
+	}
 }
