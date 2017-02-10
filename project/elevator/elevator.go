@@ -1,8 +1,8 @@
 package elevator
 
 import (
-	constants "./constants"
-	driver "./driver"
+	constants "../constants"
+	driver "../driver"
 	"fmt"
 	"time"
 	//timer
@@ -12,7 +12,7 @@ var lastFloor int
 var orderedFloor int
 var State constants.ElevatorState
 
-chan nextFloorChannel int
+var nextFloorChannel *chan int
 
 func Run() {
 
@@ -72,10 +72,9 @@ func Reboot() {
 
 }
 
-func initElev(nextFloorCh *chan int) {
+func InitElev(nextFloorCh *chan int) {
 	//Add channels
 	nextFloorChannel = nextFloorCh
-
 
 	//Elevator stuff
 	State = constants.Initializing

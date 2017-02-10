@@ -1,6 +1,7 @@
 package constants
 
-var NumberOfFloors = 4
+const NumberOfFloors = 4
+const NumberOfElevators = 1
 
 type ElevatorState int
 type ElevatorDirection int

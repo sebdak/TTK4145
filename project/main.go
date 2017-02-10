@@ -12,4 +12,7 @@ func main() {
 	queue.InitQueue(&nextFloorCh)
 
 	go elevator.Run()
+
+	runForever := make(chan bool)
+	<-runForever
 }

@@ -1,18 +1,16 @@
 package queue
 
 import (
-	"container/list"
-	constants "../constants"
+//constants "../constants"
+//"container/list"
 )
 
-type 
+//var internalQueue [constants.NumberOfElevators]List
+//var externalQueue [constants.NumberOfElevators]List
 
-var internalQueue [constants.NumberOfElevators]List
-var externalQueue [constants.NumberOfElevators]List
+var nextFloorChannel *chan int
 
-chan nextFloorChannel int
-
-func InitQueue(nextFloorCh *chan int){
+func InitQueue(nextFloorCh *chan int) {
 	nextFloorChannel = nextFloorCh
 }
 
@@ -20,6 +18,6 @@ func addInternalFloorOrder() {
 
 }
 
-
-
-func calculateCost int()
+func calculateCost() int {
+	return 0
+}
