@@ -30,3 +30,6 @@ func lookForNewInternalOrder() {
 func calculateCost() int {
 	return 0
 }
+
+//NEXT TIME
+//CREATE INTERNAL ORDER ARRAY AND MAKE ELEVATOR HANDLE INTERNAL QUEUE ORDERS
