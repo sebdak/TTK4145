@@ -8,9 +8,11 @@ import (
 
 func main() {
 
-	nextFloorCh := make(chan constants.InternalFloorOrder)
-	elevator.InitElev(nextFloorCh)
-	queue.InitQueue(nextFloorCh)
+	newOrderChannel := make(chan constants.NewOrder)
+	nextFloorChannel := make(chan int)
+
+	elevator.InitElev(newOrderChannel, nextFloorChannel)
+	queue.InitQueue(newOrderChannel, nextFloorChannel)
 
 	go elevator.Run()
 

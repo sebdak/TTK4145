@@ -25,7 +25,7 @@ const (
 	ButtonCommand
 )
 
-type InternalFloorOrder struct {
+type NewOrder struct {
 	Floor     int
 	Direction ElevatorDirection
 }

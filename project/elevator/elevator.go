@@ -12,7 +12,8 @@ var lastFloor int
 var orderedFloor int
 var State constants.ElevatorState
 
-var nextFloorChannel chan constants.InternalFloorOrder
+var nextFloorCh chan int
+var newOrderCh chan constants.NewOrder
 
 func Run() {
 
@@ -48,7 +49,7 @@ func debug() {
 	fmt.Println("Yo")
 }
 
-func SetNextOrder(floor int) {
+func UpdateNextOrder(floor int) {
 
 	orderedFloor = floor
 
@@ -72,9 +73,10 @@ func Reboot() {
 
 }
 
-func InitElev(nextFloorCh chan constants.InternalFloorOrder) {
+func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int) {
 	//Add channels
-	nextFloorChannel = nextFloorCh
+	newOrderCh = newOrderChannel
+	nextFloorCh = nextFloorChannel
 
 	//Elevator stuff
 	State = constants.Initializing
@@ -112,21 +114,23 @@ func lookForChangeInFloor() {
 }
 
 func lookForButtonPress() {
-	var newInternalOrder constants.InternalFloorOrder
+	var newInternalOrder constants.NewOrder
 
 	for {
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
 
 			if driver.GetButtonSignal(constants.ButtonCommand, floor) == 1 {
 				driver.SetButtonLamp(constants.ButtonCommand, floor, 1)
-				SetNextOrder(floor)
+				newInternalOrder.Floor = floor
+				newInternalOrder.Direction = constants.DirStop
+				newOrderCh <- newInternalOrder
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
 				driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
 				newInternalOrder.Floor = floor
 				newInternalOrder.Direction = constants.DirUp
-				nextFloorChannel <- newInternalOrder
+				newOrderCh <- newInternalOrder
 
 			}
 
@@ -134,7 +138,7 @@ func lookForButtonPress() {
 				driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
 				newInternalOrder.Floor = floor
 				newInternalOrder.Direction = constants.DirDown
-				nextFloorChannel <- newInternalOrder
+				newOrderCh <- newInternalOrder
 
 			}
 
