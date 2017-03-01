@@ -67,27 +67,33 @@ func internalQueueAddOrder(order constants.NewOrder) {
 	//Vi har  lastfloor, orderedfloor, direction
 	orderDir := getNeededElevatorDirection(order)
 
+	//DERSOM ORDERDIR OG ELEVATORDIR IKKE STEMMER OVERENS, VENT TIL DE STEMMER
+	//INTERNALQUEUE BURDE HENTES UT FRA CHANNEL HVIS IKKE KAN CONQUERRENCY PROBLEMER OPPSTÅ
 
 	for i := 0; i < len(internalQueue); i++ {
 		queueOrderDir := getNeededElevatorDirection(internalQueue[i])
 
-		select{
+		switch{
 		case orderDir == queueOrderDir:
 			if(orderDir == constants.DirUp){
 
 				if(order.Floor < internalQueue[i].Floor){
 					//Legg inn ordre på index i
+				} else if(i==len(internalQueue)-1){
+					//Legg inn ordre bakerst
 				}
 
 			} else{
 
 				if(order.Floor > internalQueue[i].Floor){
 					//Legg inn ordre på index i
+				} else if(i==len(internalQueue)-1){
+					//Legg inn ordre bakerst
 				}
 
 			}
 
-		case orderDir != queueOrderDir && queueOrderDir == elevator.Direction && i == len(internalQueue):
+		case orderDir != queueOrderDir && i == len(internalQueue)-1:
 			//Legg til ordre bakerst
 
 		default:
@@ -141,7 +147,7 @@ func internalQueueAddOrder(order constants.NewOrder) {
 
 func getNeededElevatorDirection(order constants.NewOrder){
 		direction := constants.DirStop
-	if order.Floor < elevator.LastFloor {
+	if order.Floor > elevator.LastFloor {
 		direction = constants.DirUp
 	}
 	else {
