@@ -8,12 +8,14 @@ import (
 	//timer
 )
 
-var lastFloor int
-var orderedFloor int
-var State constants.ElevatorState
+var LastFloor int
+var OrderedFloor int = -1
+var Direction constants.ElevatorDirection = constants.DirStop
+var state constants.ElevatorState
 
 var nextFloorCh chan int
 var newOrderCh chan constants.NewOrder
+var handledOrderCh chan constants.NewOrder
 
 func Run() {
 
@@ -36,6 +38,7 @@ func Run() {
 			if lastFloor == orderedFloor && driver.GetFloorSensor() != -1 {
 				orderedFloorReachedRoutine()
 				State = constants.AtFloor
+				Direction = constants.DirStop
 			}
 
 			break
@@ -73,10 +76,12 @@ func Reboot() {
 
 }
 
-func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int) {
+func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int, handledOrderChannel chan constants.NewOrder) {
 	//Add channels
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
+	handledOrderCh = handledOrderChannel
+
 
 	//Elevator stuff
 	State = constants.Initializing
@@ -91,16 +96,17 @@ func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int
 	//Go online
 	State = constants.AtFloor
 	go lookForButtonPress()
+	go updateDirection()
 }
 
 func goToOrderedFloor() {
 	//start timer
 	if lastFloor > orderedFloor {
-		driver.SetMotorDir(constants.DirDown)
+		Direction = constants.DirDown
 	} else {
-		driver.SetMotorDir(constants.DirUp)
+		Direction = constants.DirUp
 	}
-
+	driver.SetMotorDir(Direction)
 }
 
 func lookForChangeInFloor() {
@@ -115,6 +121,7 @@ func lookForChangeInFloor() {
 
 func lookForButtonPress() {
 	var newInternalOrder constants.NewOrder
+	newInternalOrder.Elevator = -1
 
 	for {
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
@@ -147,3 +154,4 @@ func lookForButtonPress() {
 		time.Sleep(time.Millisecond * 10)
 	}
 }
+

@@ -10,9 +10,10 @@ func main() {
 
 	newOrderChannel := make(chan constants.NewOrder)
 	nextFloorChannel := make(chan int)
+	handledOrderChannel := make(chan constants.NewOrder)
 
-	elevator.InitElev(newOrderChannel, nextFloorChannel)
-	queue.InitQueue(newOrderChannel, nextFloorChannel)
+	elevator.InitElev(newOrderChannel, nextFloorChannel, handledOrderChannel)
+	queue.InitQueue(newOrderChannel, nextFloorChannel, handledOrderChannel)
 
 	go elevator.Run()
 

@@ -28,4 +28,7 @@ const (
 type NewOrder struct {
 	Floor     int
 	Direction ElevatorDirection
+	Elevator int
 }
+
+
