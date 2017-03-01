@@ -10,7 +10,7 @@ import (
 	//"time"
 )
 
-var portNR int = 20070
+var portNR int = 20065
 
 // We define some custom struct to send over the network.
 // Note that all members we want to transmit must be public. Any private members
@@ -20,7 +20,7 @@ type HelloMsg struct {
 	Iter    int
 }
 
-func StartUDPBroadcast(helloTx chan string, helloRx chan string) {
+func StartUDPBroadcast(helloTx chan HelloMsg, helloRx chan HelloMsg, peerUpdateCh chan peers.PeerUpdate) {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
@@ -41,12 +41,12 @@ func StartUDPBroadcast(helloTx chan string, helloRx chan string) {
 
 	// We make a channel for receiving updates on the id's of the peers that are
 	//  alive on the network
-	peerUpdateCh := make(chan peers.PeerUpdate)
+	//peerUpdateCh := make(chan peers.PeerUpdate) COMMENTED OUT
 	// We can disable/enable the transmitter after it has been started.
 	// This could be used to signal that we are somehow "unavailable".
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(portNR, id, peerTxEnable)
-	go peers.Receiver(portNR, peerUpdateCh)
+	go peers.Transmitter(portNR+1337, id, peerTxEnable)
+	go peers.Receiver(portNR+1337, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
 	//helloTx := make(chan HelloMsg)
@@ -72,15 +72,18 @@ func StartUDPBroadcast(helloTx chan string, helloRx chan string) {
 
 	fmt.Println("Started")
 	for {
-		select {
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
+		/*
+			select {
+			case p := <-peerUpdateCh:
+				fmt.Printf("Peer update:\n")
+				fmt.Printf("  Peers:    %q\n", p.Peers)
+				fmt.Printf("  New:      %q\n", p.New)
+				fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-helloRx:
-			fmt.Printf("Received: %#v\n", a)
-		}
+					case a := <-helloRx:
+						fmt.Printf("Received: %#v\n", a)
+
+			}
+		*/
 	}
 }
