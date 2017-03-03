@@ -139,25 +139,24 @@ func updateElevatorNextFloor() {
 
 			if elevator.Direction == constants.DirUp {
 
-				if internalQueue[i].Floor > elevator.LastFloor {
+				if internalQueue[i].Floor > elevator.LastFloor && (internalQueue[i].Direction == constants.DirUp || internalQueue[i].Direction == constants.DirStop) {
 
 					dist = internalQueue[i].Floor - elevator.LastFloor
-					if dist <= nextFloorDist {
 
-						nextFloorDist = dist
-						bestFloorSoFar = internalQueue[i]
+				} else if internalQueue[i].Floor <= elevator.LastFloor && (internalQueue[i].Direction == constants.DirDown || internalQueue[i].Direction == constants.DirStop) {
 
-					}
-
-				} else if internalQueue[i].Floor <= elevator.LastFloor {
 					dist = ((constants.NumberOfFloors - 1) - elevator.LastFloor) + ((constants.NumberOfFloors - 1) - internalQueue[i].Floor)
 
-					if dist <= nextFloorDist {
+				} else if internalQueue[i].Floor <= elevator.LastFloor && (internalQueue[i].Direction == constants.DirDown || internalQueue[i].Direction == constants.DirStop) {
 
-						nextFloorDist = dist
-						bestFloorSoFar = internalQueue[i]
+					dist = ((constants.NumberOfFloors - 1) - elevator.LastFloor) + ((constants.NumberOfFloors - 1) - internalQueue[i].Floor)
 
-					}
+				}
+
+				if dist <= nextFloorDist {
+
+					nextFloorDist = dist
+					bestFloorSoFar = internalQueue[i]
 
 				}
 
