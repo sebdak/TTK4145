@@ -9,7 +9,8 @@ import (
 )
 
 var internalQueue []constants.NewOrder
-var externalQueue []constants.ExternalOrder
+var externalQueue []constants.NewOrder
+
 //var externalQueue [constants.NumberOfElevators]List
 
 var newOrderCh chan constants.NewOrder
@@ -30,17 +31,16 @@ func lookForNewInternalOrder() {
 
 		order := <-newOrderCh
 		if checkIfNewOrder(order) {
-			fmt.Println("Added new order ", order.Floor, order.Direction)
-			internalQueue = append(internalQueue, order)
-			if order.Direction == constants.DirStop {
-				internalQueue = append(internalQueue, order)
-			}
-			else {
-				externalQueue = append(externalQueue,order)
-			}
+			queueAddOrder(order)
 		}
 
 		time.Sleep(time.Millisecond)
+	}
+}
+
+func Debug() {
+	for i := 0; i < len(internalQueue); i++ {
+		fmt.Println("Orders ", internalQueue[i].Floor, internalQueue[i].Direction)
 	}
 }
 
@@ -51,7 +51,7 @@ func checkIfNewOrder(order constants.NewOrder) bool {
 		}
 	}
 	for j := 0; j < len(externalQueue); j++ {
-		if externalQueue[i] == order {
+		if externalQueue[j] == order {
 			return false
 		}
 	}
@@ -62,48 +62,70 @@ func calculateCost() int {
 	return 0
 }
 
+func queueAddOrder(order constants.NewOrder) {
+	if order.Direction == constants.DirStop {
+		internalQueue = append(internalQueue, order)
+	} else {
+		externalQueue = append(externalQueue, order)
+	}
+}
 
-func internalQueueAddOrder(order constants.NewOrder) {
-	//Vi har  lastfloor, orderedfloor, direction
-	orderDir := getNeededElevatorDirection(order)
+func updateNextFloor() {
+	if len(internalQueue) != 0 {
+		var bestFloorSoFar constants.NewOrder
+		var nextFloorDist int = 100
+		var dist int
 
-	//DERSOM ORDERDIR OG ELEVATORDIR IKKE STEMMER OVERENS, VENT TIL DE STEMMER
-	//INTERNALQUEUE BURDE HENTES UT FRA CHANNEL HVIS IKKE KAN CONQUERRENCY PROBLEMER OPPSTÅ
+		for i := 0; i < len(internalQueue); i++ {
 
-	for i := 0; i < len(internalQueue); i++ {
-		queueOrderDir := getNeededElevatorDirection(internalQueue[i])
+			if Direction == constants.DirUp {
 
-		switch{
-		case orderDir == queueOrderDir:
-			if(orderDir == constants.DirUp){
+				if internalQueue[i].Floor > LastFloor {
 
-				if(order.Floor < internalQueue[i].Floor){
-					//Legg inn ordre på index i
-				} else if(i==len(internalQueue)-1){
-					//Legg inn ordre bakerst
+					dist = internalQueue[i].Floor - LastFloor
+					if dist <= nextFloorDist {
+
+						bestFloorSoFar = internalQueue[i]
+
+					}
+
+				} else if internalQueue[i].Floor <= LastFloor {
+					dist = (4 - LastFloor) + (4 - internalQueue[i].Floor)
+
+					if dist <= nextFloorDist {
+
+						bestFloorSoFar = internalQueue[i]
+
+					}
+
 				}
 
-			} else{
+			} else if Direction == constants.DirDown {
+				if internalQueue[i].Floor < LastFloor {
 
-				if(order.Floor > internalQueue[i].Floor){
-					//Legg inn ordre på index i
-				} else if(i==len(internalQueue)-1){
-					//Legg inn ordre bakerst
+					dist = LastFloor - internalQueue[i].Floor
+					if dist <= nextFloorDist {
+
+						bestFloorSoFar = internalQueue[i]
+
+					}
+
+				} else if internalQueue[i].Floor >= LastFloor {
+					dist = LastFloor + internalQueue[i].Floor
+
+					if dist <= nextFloorDist {
+
+						bestFloorSoFar = internalQueue[i]
+					}
+
 				}
-
 			}
-
-		case orderDir != queueOrderDir && i == len(internalQueue)-1:
-			//Legg til ordre bakerst
-
-		default:
 
 		}
 
-
-
 	}
 }
+
 /* Bruk i externalqueue
 func internalQueueAddOrder(order constants.NewOrder) {
 	//Vi har  lastfloor, orderedfloor, direction
@@ -145,15 +167,15 @@ func internalQueueAddOrder(order constants.NewOrder) {
 }
 */
 
-func getNeededElevatorDirection(order constants.NewOrder){
-		direction := constants.DirStop
+func getNeededElevatorDirection(order constants.NewOrder) constants.ElevatorDirection {
+	var direction constants.ElevatorDirection = constants.DirStop
 	if order.Floor > elevator.LastFloor {
 		direction = constants.DirUp
-	}
-	else {
+	} else {
 		direction = constants.DirDown
 	}
 	return direction
 }
+
 //NEXT TIME
 //CREATE INTERNAL ORDER ARRAY AND MAKE ELEVATOR HANDLE INTERNAL QUEUE ORDERS
