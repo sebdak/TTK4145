@@ -9,11 +9,12 @@ import (
 )
 
 var LastFloor int
-var OrderedFloor int = 0
+var currentOrder constants.NewOrder
 var Direction constants.ElevatorDirection = constants.DirStop
 var state constants.ElevatorState
+var ID int = 1
 
-var nextFloorCh chan int
+var nextFloorCh chan constants.NewOrder
 var newOrderCh chan constants.NewOrder
 var handledOrderCh chan constants.NewOrder
 
@@ -26,7 +27,7 @@ func Run() {
 			break
 
 		case constants.AtFloor:
-			if LastFloor != OrderedFloor {
+			if LastFloor != currentOrder.Floor {
 				goToOrderedFloor()
 				state = constants.Moving
 			}
@@ -35,7 +36,7 @@ func Run() {
 
 		case constants.Moving:
 			lookForChangeInFloor()
-			if LastFloor == OrderedFloor && driver.GetFloorSensor() != -1 {
+			if LastFloor == currentOrder.Floor && driver.GetFloorSensor() != -1 {
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
 			}
@@ -51,10 +52,23 @@ func debug() {
 	fmt.Println("Yo")
 }
 
-func UpdateNextOrder(floor int) {
+func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan constants.NewOrder, handledOrderChannel chan constants.NewOrder) {
+	//Add channels
+	newOrderCh = newOrderChannel
+	nextFloorCh = nextFloorChannel
+	handledOrderCh = handledOrderChannel
 
-	OrderedFloor = floor
+	//Elevator stuff
+	currentOrder = constants.NewOrder{Floor: 0, Direction: constants.DirStop, ElevatorID: -1}
+	state = constants.Initializing
+	driver.InitElev()
 
+	goToFirstFloor()
+
+	//Go online
+	state = constants.AtFloor
+	go lookForButtonPress()
+	go lookForNewQueueOrder()
 }
 
 func orderedFloorReachedRoutine() {
@@ -63,28 +77,16 @@ func orderedFloorReachedRoutine() {
 	driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
 	setDirection()
-	//Tell queue ordered has been handled and ask for new order
-	//Set door open light and start floortimer
 
+	//Start floortimer
+	waitAtFloorTimer := time.NewTimer(time.Second * 2)
+	<-waitAtFloorTimer.C
+
+	//Tell queue order has been handled
+	handledOrderCh <- currentOrder
 }
 
-func ReadState() {
-
-}
-
-func Reboot() {
-
-}
-
-func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int, handledOrderChannel chan constants.NewOrder) {
-	//Add channels
-	newOrderCh = newOrderChannel
-	nextFloorCh = nextFloorChannel
-	handledOrderCh = handledOrderChannel
-
-	//Elevator stuff
-	state = constants.Initializing
-	driver.InitElev()
+func goToFirstFloor() {
 	if driver.GetFloorSensor() != 0 {
 		driver.SetMotorDir(constants.DirDown)
 	}
@@ -92,19 +94,14 @@ func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int
 	for driver.GetFloorSensor() != 0 {
 	}
 
-	setDirection()
 	driver.SetMotorDir(constants.DirStop)
-	//Go online
-	state = constants.AtFloor
-	go lookForButtonPress()
-	go lookForNewQueueOrder()
+	setDirection()
 }
 
 func lookForNewQueueOrder() {
 	for {
-
-		OrderedFloor = <-nextFloorCh
-		fmt.Println("New order: ", OrderedFloor)
+		currentOrder = <-nextFloorCh
+		fmt.Println("New elevator order: ", currentOrder.Floor)
 		time.Sleep(time.Millisecond * 5)
 	}
 }
@@ -120,9 +117,9 @@ func setDirection() {
 		Direction = constants.DirUp
 	} else if LastFloor == constants.NumberOfFloors-1 {
 		Direction = constants.DirDown
-	} else if LastFloor < OrderedFloor && OrderedFloor != -1 {
+	} else if LastFloor < currentOrder.Floor && currentOrder.Floor != -1 {
 		Direction = constants.DirUp
-	} else if LastFloor < OrderedFloor && OrderedFloor != -1 {
+	} else if LastFloor > currentOrder.Floor && currentOrder.Floor != -1 {
 		Direction = constants.DirDown
 	}
 }
@@ -138,32 +135,33 @@ func lookForChangeInFloor() {
 }
 
 func lookForButtonPress() {
-	var newInternalOrder constants.NewOrder
-	newInternalOrder.Elevator = -1
+	var newOrder constants.NewOrder
+	newOrder.ElevatorID = -1
 
 	for {
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
 
 			if driver.GetButtonSignal(constants.ButtonCommand, floor) == 1 {
 				driver.SetButtonLamp(constants.ButtonCommand, floor, 1)
-				newInternalOrder.Floor = floor
-				newInternalOrder.Direction = constants.DirStop
-				newOrderCh <- newInternalOrder
+				newOrder.Floor = floor
+				newOrder.Direction = constants.DirStop
+				newOrder.ElevatorID = ID
+				newOrderCh <- newOrder
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
 				driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
-				newInternalOrder.Floor = floor
-				newInternalOrder.Direction = constants.DirUp
-				newOrderCh <- newInternalOrder
+				newOrder.Floor = floor
+				newOrder.Direction = constants.DirUp
+				newOrderCh <- newOrder
 
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
 				driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
-				newInternalOrder.Floor = floor
-				newInternalOrder.Direction = constants.DirDown
-				newOrderCh <- newInternalOrder
+				newOrder.Floor = floor
+				newOrder.Direction = constants.DirDown
+				newOrderCh <- newOrder
 
 			}
 

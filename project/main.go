@@ -9,7 +9,7 @@ import (
 func main() {
 
 	newOrderChannel := make(chan constants.NewOrder)
-	nextFloorChannel := make(chan int)
+	nextFloorChannel := make(chan constants.NewOrder)
 	handledOrderChannel := make(chan constants.NewOrder)
 
 	elevator.InitElev(newOrderChannel, nextFloorChannel, handledOrderChannel)
