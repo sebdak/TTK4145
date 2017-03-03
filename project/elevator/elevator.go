@@ -9,7 +9,7 @@ import (
 )
 
 var LastFloor int
-var OrderedFloor int = -1
+var OrderedFloor int = 0
 var Direction constants.ElevatorDirection = constants.DirStop
 var state constants.ElevatorState
 
@@ -38,7 +38,6 @@ func Run() {
 			if LastFloor == OrderedFloor && driver.GetFloorSensor() != -1 {
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
-				Direction = constants.DirStop
 			}
 
 			break
@@ -63,6 +62,7 @@ func orderedFloorReachedRoutine() {
 	driver.SetButtonLamp(constants.ButtonCallUp, LastFloor, 0)
 	driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
+	setDirection()
 	//Tell queue ordered has been handled and ask for new order
 	//Set door open light and start floortimer
 
@@ -88,17 +88,25 @@ func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan int
 	if driver.GetFloorSensor() != 0 {
 		driver.SetMotorDir(constants.DirDown)
 	}
-	i := 1
+
 	for driver.GetFloorSensor() != 0 {
-		fmt.Println(driver.GetFloorSensor(), i)
-		i++
-		time.Sleep(time.Millisecond * 100)
 	}
 
+	setDirection()
 	driver.SetMotorDir(constants.DirStop)
 	//Go online
 	state = constants.AtFloor
 	go lookForButtonPress()
+	go lookForNewQueueOrder()
+}
+
+func lookForNewQueueOrder() {
+	for {
+
+		OrderedFloor = <-nextFloorCh
+		fmt.Println("New order: ", OrderedFloor)
+		time.Sleep(time.Millisecond * 5)
+	}
 }
 
 func goToOrderedFloor() {
@@ -108,7 +116,11 @@ func goToOrderedFloor() {
 }
 
 func setDirection() {
-	if LastFloor < OrderedFloor && OrderedFloor != -1 {
+	if LastFloor == 0 {
+		Direction = constants.DirUp
+	} else if LastFloor == constants.NumberOfFloors-1 {
+		Direction = constants.DirDown
+	} else if LastFloor < OrderedFloor && OrderedFloor != -1 {
 		Direction = constants.DirUp
 	} else if LastFloor < OrderedFloor && OrderedFloor != -1 {
 		Direction = constants.DirDown

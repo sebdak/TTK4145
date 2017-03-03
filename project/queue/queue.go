@@ -32,6 +32,7 @@ func lookForNewInternalOrder() {
 		order := <-newOrderCh
 		if checkIfNewOrder(order) {
 			queueAddOrder(order)
+			updateNextFloor()
 		}
 
 		time.Sleep(time.Millisecond)
@@ -78,43 +79,47 @@ func updateNextFloor() {
 
 		for i := 0; i < len(internalQueue); i++ {
 
-			if Direction == constants.DirUp {
+			if elevator.Direction == constants.DirUp {
 
-				if internalQueue[i].Floor > LastFloor {
+				if internalQueue[i].Floor > elevator.LastFloor {
 
-					dist = internalQueue[i].Floor - LastFloor
+					dist = internalQueue[i].Floor - elevator.LastFloor
 					if dist <= nextFloorDist {
 
+						nextFloorDist = dist
 						bestFloorSoFar = internalQueue[i]
 
 					}
 
-				} else if internalQueue[i].Floor <= LastFloor {
-					dist = (4 - LastFloor) + (4 - internalQueue[i].Floor)
+				} else if internalQueue[i].Floor <= elevator.LastFloor {
+					dist = ((constants.NumberOfFloors - 1) - elevator.LastFloor) + ((constants.NumberOfFloors - 1) - internalQueue[i].Floor)
 
 					if dist <= nextFloorDist {
 
+						nextFloorDist = dist
 						bestFloorSoFar = internalQueue[i]
 
 					}
 
 				}
 
-			} else if Direction == constants.DirDown {
-				if internalQueue[i].Floor < LastFloor {
+			} else if elevator.Direction == constants.DirDown {
+				if internalQueue[i].Floor < elevator.LastFloor {
 
-					dist = LastFloor - internalQueue[i].Floor
+					dist = elevator.LastFloor - internalQueue[i].Floor
 					if dist <= nextFloorDist {
 
+						nextFloorDist = dist
 						bestFloorSoFar = internalQueue[i]
 
 					}
 
-				} else if internalQueue[i].Floor >= LastFloor {
-					dist = LastFloor + internalQueue[i].Floor
+				} else if internalQueue[i].Floor >= elevator.LastFloor {
+					dist = elevator.LastFloor + internalQueue[i].Floor
 
 					if dist <= nextFloorDist {
 
+						nextFloorDist = dist
 						bestFloorSoFar = internalQueue[i]
 					}
 
@@ -122,6 +127,8 @@ func updateNextFloor() {
 			}
 
 		}
+
+		nextFloorCh <- bestFloorSoFar.Floor
 
 	}
 }
