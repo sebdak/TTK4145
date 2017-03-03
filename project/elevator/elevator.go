@@ -78,12 +78,12 @@ func orderedFloorReachedRoutine() {
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
 	setDirection()
 
+	//Tell queue order has been handled
+	handledOrderCh <- currentOrder
 	//Start floortimer
 	waitAtFloorTimer := time.NewTimer(time.Second * 2)
 	<-waitAtFloorTimer.C
 
-	//Tell queue order has been handled
-	handledOrderCh <- currentOrder
 }
 
 func goToFirstFloor() {

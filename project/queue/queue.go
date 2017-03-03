@@ -82,22 +82,24 @@ func lookForOrder() {
 }
 
 func Debug() {
-	<-internalQueueMutex
+	//<-internalQueueMutex
 	for i := 0; i < len(internalQueue); i++ {
 		fmt.Println("Orders ", internalQueue[i].Floor, internalQueue[i].Direction)
 	}
-	internalQueueMutex <- true
+	//internalQueueMutex <- true
 }
 
 func checkIfNewOrder(order constants.NewOrder) bool {
 	<-internalQueueMutex
 	for i := 0; i < len(internalQueue); i++ {
 		if internalQueue[i] == order {
+			internalQueueMutex <- true
 			return false
 		}
 	}
 	for j := 0; j < len(externalQueue); j++ {
 		if externalQueue[j] == order {
+			internalQueueMutex <- true
 			return false
 		}
 	}
