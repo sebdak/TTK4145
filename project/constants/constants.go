@@ -3,7 +3,8 @@ package constants
 const NumberOfFloors = 4
 const NumberOfElevators = 1
 const MessagePort = 20070
-const PeersPort = MessagePort+1337
+const PeersPort = MessagePort+1
+const MasterPort = MessagePort+1000
 
 
 type ElevatorState int
@@ -28,7 +29,7 @@ const (
 	ButtonCommand
 )
 
-type NewOrder struct {
+type Order struct {
 	Floor      int
 	Direction  ElevatorDirection
 	ElevatorID int

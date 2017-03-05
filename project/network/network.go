@@ -5,6 +5,7 @@ import (
 	localip "./localip"
 	peers "./peers"
 	constants "../constants"
+	queue "../queue"
 	"flag"
 	"fmt"
 	"os"
@@ -13,22 +14,117 @@ import (
 )
 
 var peerUpdateCh chan peers.PeerUpdate
+var newExternalOrderCh chan constants.Order 
 
+
+var p peers.PeerUpdate
+var id string
+
+
+func main(){
+	//StartUDPPeersBroadcast()
+	InitNetwork(make(chan constants.Order))
+}
+
+func InitNetwork(newExternalOrderChannel chan constants.Order){
+	//Store channels
+	newExternalOrderCh = newExternalOrderChannel
+
+	//Tries to go online 
+	for(!testIfOnline()){
+		fmt.Println("Not online, trying to reconnect")
+		time.Sleep(time.Second*3)
+	}
+
+	//start peers broadcast
+	StartUDPPeersBroadcast()
+
+	go masterBroadcast()
+	//Update peers on network 
+	go updatePeers()
+
+	//wait one second for peers to come online
+	time.Sleep(time.Second)
+
+	checkIfMasterIsAlive()
+
+
+	go lookForNewExternalOrder()
+
+	var foo chan int = make(chan int)
+	<- foo
+}
+
+func updatePeers() {
+	for {
+		p = <- peerUpdateCh	
+	}
+}
+
+func checkIfMasterIsAlive() {
+	masterRx := make(chan string)
+	go bcast.Receiver(constants.MasterPort, masterRx)
+	timer := time.NewTimer(time.Millisecond * 500)
+	
+	select {
+	case <- timer.C:
+		chooseMasterSlave()
+	case <- masterRx:
+		queue.Master = false
+		fmt.Println("other master on network")
+	}
+
+}
+
+func chooseMasterSlave() {
+	smallestID := p.Peers[0]
+
+	for i := 1; i < len(p.Peers); i++ {
+		if p.Peers[i] < smallestID {
+			smallestID = p.Peers[i]
+		}
+	}
+
+	if id == smallestID {
+		//you are master
+		//start masterBroadcast
+		queue.Master = true
+		fmt.Println("master because of smallestID")
+		
+	} else {
+		queue.Master = false
+		fmt.Println("not master because of ID")
+	}
+}
+
+func masterBroadcast() {
+	masterTx := make(chan string)
+	go bcast.Transmitter(constants.MasterPort, masterTx)
+	for {
+		if (queue.Master) {
+	 		masterTx <- id
+		}
+		time.Sleep(time.Millisecond * 50)		
+	}
+
+}
+
+func lookForNewExternalOrder(){
+	for{
+		order := <- newExternalOrderCh
+		if(queue.CheckIfNewOrder(order)){
+			//broadcast order
+		}
+		time.Sleep(time.Millisecond)
+	}
+}
+
+/*
 type HelloMsg struct {
 	Message string
 	Iter    int
 }
 
-func main(){
-	DebugAlive()
-
-}
-func DebugAlive(){
-	for{
-		testIfOnline()
-		time.Sleep(time.Second * 2)
-	}
-}
 
 func DebugSendMessage(){
 	master := true
@@ -66,23 +162,19 @@ func DebugSendMessage(){
 
 	}
 }
+*/
 
 
 func lookForLostElevator(){
 	for {
-		select {
-
-		case p := <-peerUpdateCh:
-			if(len(p.Lost) > 0){
-				if(testIfOnline()){
-					//Elevator is still alive
-				} else{
-					//Elevator is off network
-				}
+		if(len(p.Lost) > 0){
+			if(testIfOnline()){
+				//Elevator is still alive
+				chooseMasterSlave()
+			} else{
+				//Elevator is off network
 			}
-
 		}
-		
 		time.Sleep(time.Millisecond)
 	}
 }
@@ -95,8 +187,48 @@ func testIfOnline() bool {
 	return true
 }
 
-func StartUDPBroadcast(helloTx chan HelloMsg, helloRx chan HelloMsg, peerUpdateCh chan peers.PeerUpdate) {
+func StartUDPPeersBroadcast(){
 	// Our id can be anything. Here we pass it on the command line, using
+	//  `go run main.go -id=our_id`
+	
+	peerUpdateCh = make(chan peers.PeerUpdate)
+	
+	flag.StringVar(&id, "id", "", "id of this peer")
+	flag.Parse()
+
+	// ... or alternatively, we can use the local IP address.
+	// (But since we can run multiple programs on the same PC, we also append the
+	//  process ID)
+	if id == "" {
+		localIP, err := localip.LocalIP()
+		if err != nil {
+			fmt.Println(err)
+			localIP = "DISCONNECTED"
+		}
+		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+	}
+
+	peerTxEnable := make(chan bool)
+	go peers.Transmitter(constants.PeersPort, id, peerTxEnable)
+	go peers.Receiver(constants.PeersPort, peerUpdateCh)
+
+	/*
+	for {
+		
+		select {
+		case p := <-peerUpdateCh:
+			fmt.Printf("Peer update:\n")
+			fmt.Printf("  Peers:    %q\n", p.Peers)
+			fmt.Printf("  New:      %q\n", p.New)
+			fmt.Printf("  Lost:     %q\n", p.Lost)
+		}	
+	}
+	*/
+}
+
+func StartUDPOrderBroadcast(helloTx chan constants.Order, helloRx chan constants.Order, peerUpdateCh chan peers.PeerUpdate) {
+
+		// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
 	flag.StringVar(&id, "id", "", "id of this peer")
@@ -113,7 +245,6 @@ func StartUDPBroadcast(helloTx chan HelloMsg, helloRx chan HelloMsg, peerUpdateC
 		}
 		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
-
 	// We make a channel for receiving updates on the id's of the peers that are
 	//  alive on the network
 	//peerUpdateCh := make(chan peers.PeerUpdate) COMMENTED OUT

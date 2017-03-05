@@ -5,18 +5,18 @@ import (
 	driver "../driver"
 	"fmt"
 	"time"
-	//timer
 )
 
 var LastFloor int
-var currentOrder constants.NewOrder
+var currentOrder constants.Order
 var Direction constants.ElevatorDirection = constants.DirStop
 var state constants.ElevatorState
 var ID int = 1
 
-var nextFloorCh chan constants.NewOrder
-var newOrderCh chan constants.NewOrder
-var handledOrderCh chan constants.NewOrder
+var newInternalOrderCh chan constants.Order
+var newExternalOrderCh chan constants.Order
+var nextFloorCh chan constants.Order
+var handledOrderCh chan constants.Order
 
 func Run() {
 
@@ -52,14 +52,15 @@ func debug() {
 	fmt.Println("Yo")
 }
 
-func InitElev(newOrderChannel chan constants.NewOrder, nextFloorChannel chan constants.NewOrder, handledOrderChannel chan constants.NewOrder) {
+func InitElev(newInternalOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order) {
 	//Add channels
-	newOrderCh = newOrderChannel
+	newInternalOrderCh = newInternalOrderChannel
+	newExternalOrderCh = newExternalOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
 
 	//Elevator stuff
-	currentOrder = constants.NewOrder{Floor: 0, Direction: constants.DirStop, ElevatorID: -1}
+	currentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: -1}
 	state = constants.Initializing
 	driver.InitElev()
 
@@ -142,7 +143,7 @@ func lookForChangeInFloor() {
 }
 
 func lookForButtonPress() {
-	var newOrder constants.NewOrder
+	var newOrder constants.Order
 	newOrder.ElevatorID = 1
 
 	for {
@@ -153,14 +154,14 @@ func lookForButtonPress() {
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirStop
 				newOrder.ElevatorID = ID
-				newOrderCh <- newOrder
+				newInternalOrderCh <- newOrder
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
 				driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirUp
-				newOrderCh <- newOrder
+				newExternalOrderCh <- newOrder
 
 			}
 
@@ -168,7 +169,7 @@ func lookForButtonPress() {
 				driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirDown
-				newOrderCh <- newOrder
+				newExternalOrderCh <- newOrder
 
 			}
 

@@ -3,22 +3,21 @@ package queue
 import (
 	constants "../constants"
 	elevator "../elevator"
-	//"container/list"
 	"fmt"
 	"time"
 )
 
-var internalQueue []constants.NewOrder
-var externalQueue []constants.NewOrder
+var Master bool = false
 
-//var externalQueue [constants.NumberOfElevators]List
+var internalQueue []constants.Order
+var externalQueue []constants.Order
 
 var internalQueueMutex = make(chan bool, 1)
-var newOrderCh chan constants.NewOrder
-var nextFloorCh chan constants.NewOrder
-var handledOrderCh chan constants.NewOrder
+var newOrderCh chan constants.Order
+var nextFloorCh chan constants.Order
+var handledOrderCh chan constants.Order
 
-func InitQueue(newOrderChannel chan constants.NewOrder, nextFloorChannel chan constants.NewOrder, handledOrderChannel chan constants.NewOrder) {
+func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order) {
 	//Add channels
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
@@ -45,7 +44,7 @@ func lookForHandledOrder() {
 	}
 }
 
-func deleteOrderFromQueues(order constants.NewOrder) {
+func deleteOrderFromQueues(order constants.Order) {
 	<-internalQueueMutex
 
 	for i := 0; i < len(internalQueue); i++ {
@@ -72,7 +71,7 @@ func lookForOrder() {
 	for {
 
 		order := <-newOrderCh
-		if checkIfNewOrder(order) {
+		if CheckIfNewOrder(order) {
 			queueAddOrder(order)
 			updateElevatorNextFloor()
 		}
@@ -89,7 +88,7 @@ func Debug() {
 	//internalQueueMutex <- true
 }
 
-func checkIfNewOrder(order constants.NewOrder) bool {
+func CheckIfNewOrder(order constants.Order) bool {
 	<-internalQueueMutex
 	for i := 0; i < len(internalQueue); i++ {
 		if internalQueue[i] == order {
@@ -112,7 +111,7 @@ func calculateCost() int {
 	return 0
 }
 
-func queueAddOrder(order constants.NewOrder) {
+func queueAddOrder(order constants.Order) {
 	<-internalQueueMutex
 
 	if order.Direction == constants.DirStop {
@@ -131,7 +130,7 @@ func updateElevatorNextFloor() {
 	<-internalQueueMutex
 
 	if len(internalQueue) != 0 {
-		var bestFloorSoFar constants.NewOrder
+		var bestFloorSoFar constants.Order
 		var bestFloorSoFarDist int = 100
 		var dist int
 
@@ -193,7 +192,7 @@ func updateElevatorNextFloor() {
 }
 
 /* Bruk i externalqueue
-func internalQueueAddOrder(order constants.NewOrder) {
+func internalQueueAddOrder(order constants.Order) {
 	//Vi har  lastfloor, orderedfloor, direction
 	orderDir := getNeededElevatorDirection(order)
 
@@ -233,7 +232,7 @@ func internalQueueAddOrder(order constants.NewOrder) {
 }
 */
 
-func getNeededElevatorDirection(order constants.NewOrder) constants.ElevatorDirection {
+func getNeededElevatorDirection(order constants.Order) constants.ElevatorDirection {
 	var direction constants.ElevatorDirection = constants.DirStop
 	if order.Floor > elevator.LastFloor {
 		direction = constants.DirUp
