@@ -1,11 +1,10 @@
-package main
+package network
 
 import (
 	bcast "./bcast"
 	localip "./localip"
 	peers "./peers"
 	constants "../constants"
-	queue "../queue"
 	"flag"
 	"fmt"
 	"os"
@@ -13,22 +12,31 @@ import (
 
 )
 
-var peerUpdateCh chan peers.PeerUpdate
-var newExternalOrderCh chan constants.Order 
+var Master bool = false
 
+var peerUpdateCh chan peers.PeerUpdate
+var newOrderCh chan constants.Order 
+var newExternalOrderCh chan constants.Order
+
+var elevatorHeadingTx chan constants.ElevatorHeading
+var elevatorHeadingRx chan constants.ElevatorHeading
 
 var p peers.PeerUpdate
-var id string
+var Id string
 
-
+/*
 func main(){
 	//StartUDPPeersBroadcast()
 	InitNetwork(make(chan constants.Order))
 }
+*/
 
-func InitNetwork(newExternalOrderChannel chan constants.Order){
+func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading){
 	//Store channels
+	newOrderCh = newOrderChannel
 	newExternalOrderCh = newExternalOrderChannel
+	elevatorHeadingTx = elevatorHeadingTxChannel
+	elevatorHeadingRx = elevatorHeadingRxChannel
 
 	//Tries to go online 
 	for(!testIfOnline()){
@@ -48,11 +56,15 @@ func InitNetwork(newExternalOrderChannel chan constants.Order){
 
 	checkIfMasterIsAlive()
 
+	go transmitNewExternalOrders()
 
-	go lookForNewExternalOrder()
+	go transceiveElevatorHeading()
 
-	var foo chan int = make(chan int)
-	<- foo
+}
+
+func transceiveElevatorHeading() {
+	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
+	go bcast.Receiver(constants.HeadingPort, elevatorHeadingRx)
 }
 
 func lookForChangeInPeers() {
@@ -63,7 +75,7 @@ func lookForChangeInPeers() {
 }
 
 func checkIfMasterIsAlive() {
-	if(queue.Master != true){
+	if(Master != true){
 
 
 		masterRx := make(chan string)
@@ -74,7 +86,7 @@ func checkIfMasterIsAlive() {
 		case <- timer.C:
 		chooseMasterSlave()
 		case <- masterRx:
-			queue.Master = false
+			Master = false
 			fmt.Println("other master on network")
 		}
 
@@ -90,14 +102,14 @@ func chooseMasterSlave() {
 		}
 	}
 
-	if id == smallestID {
+	if Id == smallestID {
 		//you are master
 		//start masterBroadcast
-		queue.Master = true
+		Master = true
 		fmt.Println("master because of smallestID")
 		
 	} else {
-		queue.Master = false
+		Master = false
 		fmt.Println("not master because of ID")
 	}
 }
@@ -106,21 +118,32 @@ func masterBroadcast() {
 	masterTx := make(chan string)
 	go bcast.Transmitter(constants.MasterPort, masterTx)
 	for {
-		if (queue.Master) {
-	 		masterTx <- id
+		if (Master) {
+	 		masterTx <- Id
 		}
 		time.Sleep(time.Millisecond * 50)		
 	}
 
 }
 
-func lookForNewExternalOrder(){
+func transmitNewExternalOrders(){
+	orderTx := make(chan constants.Order)
+	go bcast.Transmitter(constants.OrderPort, orderTx)
+
 	for{
 		order := <- newExternalOrderCh
-		if(queue.CheckIfNewOrder(order)){
-			//broadcast order
-		}
+		orderTx <- order
 		time.Sleep(time.Millisecond)
+	}
+}
+
+func lookForOrderFromNetwork(){
+	orderRx := make(chan constants.Order)
+	go bcast.Receiver(constants.OrderPort, orderRx)
+
+	for{
+		order := <- orderRx
+		newOrderCh <- order
 	}
 }
 
@@ -196,64 +219,23 @@ func StartUDPPeersBroadcast(){
 	
 	peerUpdateCh = make(chan peers.PeerUpdate)
 	
-	flag.StringVar(&id, "id", "", "id of this peer")
+	flag.StringVar(&Id, "id", "", "id of this peer")
 	flag.Parse()
 
 	// ... or alternatively, we can use the local IP address.
 	// (But since we can run multiple programs on the same PC, we also append the
 	//  process ID)
-	if id == "" {
+	if Id == "" {
 		localIP, err := localip.LocalIP()
 		if err != nil {
 			fmt.Println(err)
 			localIP = "DISCONNECTED"
 		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+		Id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(constants.PeersPort, id, peerTxEnable)
+	go peers.Transmitter(constants.PeersPort, Id, peerTxEnable)
 	go peers.Receiver(constants.PeersPort, peerUpdateCh)
-
-}
-
-func StartUDPOrderBroadcast(helloTx chan constants.Order, helloRx chan constants.Order, peerUpdateCh chan peers.PeerUpdate) {
-
-		// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
-	var id string
-	flag.StringVar(&id, "id", "", "id of this peer")
-	flag.Parse()
-
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
-	if id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
-	//peerUpdateCh := make(chan peers.PeerUpdate) COMMENTED OUT
-	// We can disable/enable the transmitter after it has been started.
-	// This could be used to signal that we are somehow "unavailable".
-	peerTxEnable := make(chan bool)
-	go peers.Transmitter(constants.PeersPort, id, peerTxEnable)
-	go peers.Receiver(constants.PeersPort, peerUpdateCh)
-
-	// We make channels for sending and receiving our custom data types
-	//helloTx := make(chan HelloMsg)
-	//helloRx := make(chan HelloMsg)
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(constants.MessagePort, helloTx)
-	go bcast.Receiver(constants.MessagePort, helloRx)
-
-
 
 }

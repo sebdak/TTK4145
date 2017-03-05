@@ -8,12 +8,12 @@ import (
 )
 
 var LastFloor int
-var currentOrder constants.Order
+var CurrentOrder constants.Order
 var Direction constants.ElevatorDirection = constants.DirStop
 var state constants.ElevatorState
 var ID int = 1
 
-var newInternalOrderCh chan constants.Order
+var newOrderCh chan constants.Order
 var newExternalOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
@@ -27,7 +27,7 @@ func Run() {
 			break
 
 		case constants.AtFloor:
-			if LastFloor != currentOrder.Floor {
+			if LastFloor != CurrentOrder.Floor {
 				goToOrderedFloor()
 				state = constants.Moving
 			}
@@ -36,7 +36,7 @@ func Run() {
 
 		case constants.Moving:
 			lookForChangeInFloor()
-			if LastFloor == currentOrder.Floor && driver.GetFloorSensor() != -1 {
+			if LastFloor == CurrentOrder.Floor && driver.GetFloorSensor() != -1 {
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
 			}
@@ -52,15 +52,15 @@ func debug() {
 	fmt.Println("Yo")
 }
 
-func InitElev(newInternalOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order) {
+func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order) {
 	//Add channels
-	newInternalOrderCh = newInternalOrderChannel
+	newOrderCh = newOrderChannel
 	newExternalOrderCh = newExternalOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
 
 	//Elevator stuff
-	currentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: -1}
+	CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: -1}
 	state = constants.Initializing
 	driver.InitElev()
 
@@ -79,7 +79,7 @@ func orderedFloorReachedRoutine() {
 	setDirection()
 
 	//Tell queue order has been handled
-	handledOrderCh <- currentOrder
+	handledOrderCh <- CurrentOrder
 
 	//Start floortimer
 	waitAtFloorTimer := time.NewTimer(time.Second * 2)
@@ -87,9 +87,9 @@ func orderedFloorReachedRoutine() {
 }
 
 func setLights() {
-	if currentOrder.Direction == constants.DirUp {
+	if CurrentOrder.Direction == constants.DirUp {
 		driver.SetButtonLamp(constants.ButtonCallUp, LastFloor, 0)
-	} else if currentOrder.Direction == constants.DirDown {
+	} else if CurrentOrder.Direction == constants.DirDown {
 		driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
 	}
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
@@ -108,8 +108,8 @@ func goToFirstFloor() {
 
 func lookForNewQueueOrder() {
 	for {
-		currentOrder = <-nextFloorCh
-		fmt.Println("New elevator order: ", currentOrder.Floor, currentOrder.Direction, Direction)
+		CurrentOrder = <-nextFloorCh
+		fmt.Println("New elevator order: ", CurrentOrder.Floor, CurrentOrder.Direction, Direction)
 		time.Sleep(time.Millisecond * 5)
 	}
 }
@@ -125,9 +125,9 @@ func setDirection() {
 		Direction = constants.DirUp
 	} else if LastFloor == constants.NumberOfFloors-1 {
 		Direction = constants.DirDown
-	} else if LastFloor < currentOrder.Floor && currentOrder.Floor != -1 {
+	} else if LastFloor < CurrentOrder.Floor && CurrentOrder.Floor != -1 {
 		Direction = constants.DirUp
-	} else if LastFloor > currentOrder.Floor && currentOrder.Floor != -1 {
+	} else if LastFloor > CurrentOrder.Floor && CurrentOrder.Floor != -1 {
 		Direction = constants.DirDown
 	}
 }
@@ -154,7 +154,7 @@ func lookForButtonPress() {
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirStop
 				newOrder.ElevatorID = ID
-				newInternalOrderCh <- newOrder
+				newOrderCh <- newOrder
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {

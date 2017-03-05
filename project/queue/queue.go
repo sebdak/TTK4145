@@ -1,13 +1,12 @@
 package queue
 
 import (
+	network "../network"
 	constants "../constants"
 	elevator "../elevator"
 	"fmt"
 	"time"
 )
-
-var Master bool = false
 
 var internalQueue []constants.Order
 var externalQueue []constants.Order
@@ -16,18 +15,61 @@ var internalQueueMutex = make(chan bool, 1)
 var newOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
+var elevatorHeadingTx chan constants.ElevatorHeading
+var elevatorHeadingRx chan constants.ElevatorHeading
 
-func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order) {
+var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
+
+
+func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading) {
 	//Add channels
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
+	elevatorHeadingTx = elevatorHeadingTxChannel
+	elevatorHeadingRx = elevatorHeadingRxChannel
 
 	//mutex := true
 	internalQueueMutex <- true
 
 	go lookForOrder()
 	go lookForHandledOrder()
+	go sendElevatorHeading()
+	go updateElevatorHeadings()
+}
+
+func sendElevatorHeading() {
+	for {
+		heading := constants.ElevatorHeading{
+			LastFloor: elevator.LastFloor,
+			CurrentOrder: elevator.CurrentOrder,
+			Id: network.Id,
+		}
+		
+		elevatorHeadingTx <- heading
+
+		time.Sleep(time.Millisecond * 20)	
+	}
+}
+
+func updateElevatorHeadings() {
+	var heading constants.ElevatorHeading
+	for {
+		heading = <- elevatorHeadingRx
+		if(headings[heading.Id] != heading){
+			fmt.Println("Heading ", heading.LastFloor, heading.Id )
+			headings[heading.Id] = heading
+		}
+	}
+}
+
+
+func Debug() {
+	//<-internalQueueMutex
+	for i := 0; i < len(internalQueue); i++ {
+		fmt.Println("Orders ", internalQueue[i].Floor, internalQueue[i].Direction)
+	}
+	//internalQueueMutex <- true
 }
 
 func lookForHandledOrder() {
@@ -80,13 +122,6 @@ func lookForOrder() {
 	}
 }
 
-func Debug() {
-	//<-internalQueueMutex
-	for i := 0; i < len(internalQueue); i++ {
-		fmt.Println("Orders ", internalQueue[i].Floor, internalQueue[i].Direction)
-	}
-	//internalQueueMutex <- true
-}
 
 func CheckIfNewOrder(order constants.Order) bool {
 	<-internalQueueMutex
@@ -107,23 +142,18 @@ func CheckIfNewOrder(order constants.Order) bool {
 	return true
 }
 
-func calculateCost() int {
-	return 0
-}
 
 func queueAddOrder(order constants.Order) {
-	<-internalQueueMutex
+	
 
 	if order.Direction == constants.DirStop {
+		<-internalQueueMutex
 		internalQueue = append(internalQueue, order)
+		internalQueueMutex <- true
 	} else {
-		externalQueue = append(externalQueue, order)
-		if order.ElevatorID == elevator.ID {
-			internalQueue = append(internalQueue, order)
-		}
+		//HANDLE EXTERNAL ORDER
 	}
 	Debug()
-	internalQueueMutex <- true
 }
 
 func updateElevatorNextFloor() {

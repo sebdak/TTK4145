@@ -2,9 +2,11 @@ package constants
 
 const NumberOfFloors = 4
 const NumberOfElevators = 1
-const MessagePort = 20070
-const PeersPort = MessagePort+1
-const MasterPort = MessagePort+1000
+const OrderPort = 25069
+const HeadingPort = OrderPort+1
+const QueuePort = OrderPort+2
+const PeersPort = OrderPort+3
+const MasterPort = OrderPort+4
 
 
 type ElevatorState int
@@ -33,4 +35,10 @@ type Order struct {
 	Floor      int
 	Direction  ElevatorDirection
 	ElevatorID int
+}
+
+type ElevatorHeading struct {
+	LastFloor int
+	CurrentOrder Order
+	Id string
 }

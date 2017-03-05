@@ -5,20 +5,21 @@ import (
 	elevator "./elevator"
 	queue "./queue"
 	network "./network"
-
 )
 
 func main() {
 
-	newInternalOrderChannel := make(chan constants.Order)
+	newOrderChannel := make(chan constants.Order)
 	newExternalOrderChannel := make(chan constants.Order)
 	nextFloorChannel := make(chan constants.Order)
 	handledOrderChannel := make(chan constants.Order)
 
-	network.InitNetwork(newExternalOrderChannel)
-	elevator.InitElev(newInternalOrderChannel,newExternalOrderChannel, nextFloorChannel, handledOrderChannel)
-	queue.InitQueue(newInternalOrderChannel, nextFloorChannel, handledOrderChannel)
+	elevatorHeadingTxChannel := make(chan constants.ElevatorHeading)
+	elevatorHeadingRxChannel := make(chan constants.ElevatorHeading)
 
+	elevator.InitElev(newOrderChannel,newExternalOrderChannel, nextFloorChannel, handledOrderChannel)
+	network.InitNetwork(newOrderChannel, newExternalOrderChannel, elevatorHeadingTxChannel, elevatorHeadingRxChannel)
+	queue.InitQueue(newOrderChannel, nextFloorChannel, handledOrderChannel, elevatorHeadingTxChannel, elevatorHeadingRxChannel )
 
 	go elevator.Run()
 
