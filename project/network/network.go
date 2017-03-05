@@ -41,7 +41,7 @@ func InitNetwork(newExternalOrderChannel chan constants.Order){
 
 	go masterBroadcast()
 	//Update peers on network 
-	go updatePeers()
+	go lookForChangeInPeers()
 
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
@@ -55,25 +55,30 @@ func InitNetwork(newExternalOrderChannel chan constants.Order){
 	<- foo
 }
 
-func updatePeers() {
+func lookForChangeInPeers() {
 	for {
-		p = <- peerUpdateCh	
+		p = <- peerUpdateCh
+		lookForLostElevator()	
 	}
 }
 
 func checkIfMasterIsAlive() {
-	masterRx := make(chan string)
-	go bcast.Receiver(constants.MasterPort, masterRx)
-	timer := time.NewTimer(time.Millisecond * 500)
-	
-	select {
-	case <- timer.C:
-		chooseMasterSlave()
-	case <- masterRx:
-		queue.Master = false
-		fmt.Println("other master on network")
-	}
+	if(queue.Master != true){
 
+
+		masterRx := make(chan string)
+		go bcast.Receiver(constants.MasterPort, masterRx)
+		timer := time.NewTimer(time.Millisecond * 500)
+		
+		select {
+		case <- timer.C:
+		chooseMasterSlave()
+		case <- masterRx:
+			queue.Master = false
+			fmt.Println("other master on network")
+		}
+
+	}
 }
 
 func chooseMasterSlave() {
@@ -166,17 +171,15 @@ func DebugSendMessage(){
 
 
 func lookForLostElevator(){
-	for {
-		if(len(p.Lost) > 0){
-			if(testIfOnline()){
-				//Elevator is still alive
-				chooseMasterSlave()
-			} else{
-				//Elevator is off network
-			}
+	if(len(p.Lost) > 0){
+		if(testIfOnline()){
+			//Elevator is still alive
+			checkIfMasterIsAlive()
+		} else{
+			fmt.Println("Elevator is off network")
 		}
-		time.Sleep(time.Millisecond)
 	}
+	time.Sleep(time.Millisecond)
 }
 
 func testIfOnline() bool {
@@ -212,18 +215,6 @@ func StartUDPPeersBroadcast(){
 	go peers.Transmitter(constants.PeersPort, id, peerTxEnable)
 	go peers.Receiver(constants.PeersPort, peerUpdateCh)
 
-	/*
-	for {
-		
-		select {
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
-		}	
-	}
-	*/
 }
 
 func StartUDPOrderBroadcast(helloTx chan constants.Order, helloRx chan constants.Order, peerUpdateCh chan peers.PeerUpdate) {
@@ -263,35 +254,6 @@ func StartUDPOrderBroadcast(helloTx chan constants.Order, helloRx chan constants
 	go bcast.Transmitter(constants.MessagePort, helloTx)
 	go bcast.Receiver(constants.MessagePort, helloRx)
 
-	// The example message. We just send one of these every second.
 
-	/*
-		go func() {
-			helloMsg := "I'm alive " + id
-			for {
-				//helloMsg.Iter++
-				helloTx <- helloMsg
-				time.Sleep(5 * time.Second)
-			}
-		}()
-	*/
 
-	fmt.Println("Started")
-	/*
-	for {
-		
-			select {
-			case p := <-peerUpdateCh:
-				fmt.Printf("Peer update:\n")
-				fmt.Printf("  Peers:    %q\n", p.Peers)
-				fmt.Printf("  New:      %q\n", p.New)
-				fmt.Printf("  Lost:     %q\n", p.Lost)
-
-					case a := <-helloRx:
-						fmt.Printf("Received: %#v\n", a)
-
-			}
-		
-	}
-	*/
 }
