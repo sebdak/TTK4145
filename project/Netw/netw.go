@@ -1,4 +1,4 @@
-package main
+package Netw
 
 import (
 	"./network/bcast"
@@ -7,10 +7,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
+	//"time"
 )
 
 var portNR int = 20070
+
 // We define some custom struct to send over the network.
 // Note that all members we want to transmit must be public. Any private members
 //  will be received as zero-values.
@@ -19,7 +20,7 @@ type HelloMsg struct {
 	Iter    int
 }
 
-func main() {
+func StartUDPBroadcast(helloTx chan HelloMsg, helloRx chan HelloMsg, peerUpdateCh chan peers.PeerUpdate) {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
@@ -40,16 +41,16 @@ func main() {
 
 	// We make a channel for receiving updates on the id's of the peers that are
 	//  alive on the network
-	peerUpdateCh := make(chan peers.PeerUpdate)
+	//peerUpdateCh := make(chan peers.PeerUpdate) COMMENTED OUT
 	// We can disable/enable the transmitter after it has been started.
 	// This could be used to signal that we are somehow "unavailable".
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(portNR, id, peerTxEnable)
-	go peers.Receiver(portNR, peerUpdateCh)
+	go peers.Transmitter(portNR+1337, id, peerTxEnable)
+	go peers.Receiver(portNR+1337, peerUpdateCh)
 
 	// We make channels for sending and receiving our custom data types
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
+	//helloTx := make(chan HelloMsg)
+	//helloRx := make(chan HelloMsg)
 	// ... and start the transmitter/receiver pair on some port
 	// These functions can take any number of channels! It is also possible to
 	//  start multiple transmitters/receivers on the same port.
@@ -57,26 +58,32 @@ func main() {
 	go bcast.Receiver(portNR, helloRx)
 
 	// The example message. We just send one of these every second.
-	go func() {
-		helloMsg := HelloMsg{"Hello from " + id, 0}
-		for {
-			helloMsg.Iter++
-			helloTx <- helloMsg
-			time.Sleep(5 * time.Second)
-		}
-	}()
+
+	/*
+		go func() {
+			helloMsg := "I'm alive " + id
+			for {
+				//helloMsg.Iter++
+				helloTx <- helloMsg
+				time.Sleep(5 * time.Second)
+			}
+		}()
+	*/
 
 	fmt.Println("Started")
 	for {
-		select {
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
+		
+			select {
+			case p := <-peerUpdateCh:
+				fmt.Printf("Peer update:\n")
+				fmt.Printf("  Peers:    %q\n", p.Peers)
+				fmt.Printf("  New:      %q\n", p.New)
+				fmt.Printf("  Lost:     %q\n", p.Lost)
 
-		case a := <-helloRx:
-			fmt.Printf("Received: %#v\n", a)
-		}
+					case a := <-helloRx:
+						fmt.Printf("Received: %#v\n", a)
+
+			}
+		
 	}
 }

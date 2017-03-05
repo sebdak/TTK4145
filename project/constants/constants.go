@@ -2,6 +2,9 @@ package constants
 
 const NumberOfFloors = 4
 const NumberOfElevators = 1
+const MessagePort = 20070
+const PeersPort = MessagePort+1337
+
 
 type ElevatorState int
 type ElevatorDirection int
