@@ -45,8 +45,12 @@ func sendElevatorHeading() {
 			CurrentOrder: elevator.CurrentOrder,
 			Id: network.Id,
 		}
-		
-		elevatorHeadingTx <- heading
+
+		if(headings[heading.Id] != heading){
+
+			elevatorHeadingTx <- heading
+
+		} 
 
 		time.Sleep(time.Millisecond * 20)	
 	}
@@ -56,10 +60,8 @@ func updateElevatorHeadings() {
 	var heading constants.ElevatorHeading
 	for {
 		heading = <- elevatorHeadingRx
-		if(headings[heading.Id] != heading){
-			fmt.Println("Heading ", heading.LastFloor, heading.Id )
-			headings[heading.Id] = heading
-		}
+		fmt.Println("Heading ", heading.LastFloor, heading.Id )
+		headings[heading.Id] = heading
 	}
 }
 
