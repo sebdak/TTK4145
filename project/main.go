@@ -16,10 +16,12 @@ func main() {
 
 	elevatorHeadingTxChannel := make(chan constants.ElevatorHeading)
 	elevatorHeadingRxChannel := make(chan constants.ElevatorHeading)
+	queuesTxChannel := make(chan []constants.Order)
+	queuesRxChannel := make(chan []constants.Order)
 
 	elevator.InitElev(newOrderChannel,newExternalOrderChannel, nextFloorChannel, handledOrderChannel)
-	network.InitNetwork(newOrderChannel, newExternalOrderChannel, elevatorHeadingTxChannel, elevatorHeadingRxChannel)
-	queue.InitQueue(newOrderChannel, nextFloorChannel, handledOrderChannel, elevatorHeadingTxChannel, elevatorHeadingRxChannel )
+	network.InitNetwork(newOrderChannel, newExternalOrderChannel, elevatorHeadingTxChannel, elevatorHeadingRxChannel, queuesTxChannel, queuesRxChannel)
+	queue.InitQueue(newOrderChannel, nextFloorChannel, handledOrderChannel, elevatorHeadingTxChannel, elevatorHeadingRxChannel, queuesTxChannel, queuesRxChannel)
 
 	go elevator.Run()
 

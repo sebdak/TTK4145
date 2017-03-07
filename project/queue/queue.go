@@ -15,19 +15,26 @@ var internalQueueMutex = make(chan bool, 1)
 var newOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
+
 var elevatorHeadingTx chan constants.ElevatorHeading
 var elevatorHeadingRx chan constants.ElevatorHeading
+var queuesTx chan []constants.Order
+var queuesRx chan []constants.Order
 
 var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
 
 
-func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading) {
-	//Add channels
+func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order) {
+	//Add channels for modulecommunication
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
+
+	//Channels for module-network communication
 	elevatorHeadingTx = elevatorHeadingTxChannel
 	elevatorHeadingRx = elevatorHeadingRxChannel
+	queuesTx = queuesTxChannel
+	queuesRx = queuesRxChannel
 
 	//mutex := true
 	internalQueueMutex <- true
@@ -64,6 +71,8 @@ func updateElevatorHeadings() {
 		headings[heading.Id] = heading
 	}
 }
+
+//Skriv transmit og receive av queues!!!!!!!
 
 
 func Debug() {

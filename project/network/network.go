@@ -20,6 +20,9 @@ var newExternalOrderCh chan constants.Order
 
 var elevatorHeadingTx chan constants.ElevatorHeading
 var elevatorHeadingRx chan constants.ElevatorHeading
+var queuesTx chan []constants.Order
+var queuesRx chan []constants.Order
+
 
 var p peers.PeerUpdate
 var Id string
@@ -31,12 +34,16 @@ func main(){
 }
 */
 
-func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading){
-	//Store channels
+func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order){
+	//Store channels for module communication
 	newOrderCh = newOrderChannel
 	newExternalOrderCh = newExternalOrderChannel
+
+	//Store channels for module-network communication
 	elevatorHeadingTx = elevatorHeadingTxChannel
 	elevatorHeadingRx = elevatorHeadingRxChannel
+	queuesTx = queuesTxChannel
+	queuesRx = queuesRxChannel
 
 	//Tries to go online 
 	for(!testIfOnline()){
@@ -72,6 +79,11 @@ func lookForChangeInPeers() {
 		p = <- peerUpdateCh
 		lookForLostElevator()	
 	}
+}
+
+func transceiveQueues() {
+	go bcast.Transmitter(constants.QueuePort, queuesTx)
+	go bcast.Receiver(constants.QueuePort, queuesRx)
 }
 
 func checkIfMasterIsAlive() {
