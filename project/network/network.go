@@ -67,6 +67,8 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 
 	go transceiveElevatorHeading()
 
+	go transceiveQueues()
+
 }
 
 func transceiveElevatorHeading() {

@@ -13,6 +13,7 @@ var externalQueues [][]constants.Order
 
 
 var internalQueueMutex = make(chan bool, 1)
+var externalQueuesMutex = make(chan bool, 1)
 var newOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
@@ -41,6 +42,7 @@ func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan const
 
 	//mutex := true
 	internalQueueMutex <- true
+	externalQueuesMutex <- true
 
 	//init external queue
 	initQueues()
@@ -55,7 +57,7 @@ func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan const
 
 func initQueues() {
 	internalQueue = make([]constants.Order)
-	
+
 	externalQueues = make([][]constants.Order, constants.NumberOfElevators)
 	for i := 0; i < constants.NumberOfElevators; i++ {
 		externalQueues[i] = make([]constants.Order, 1)
@@ -66,8 +68,10 @@ func initQueues() {
 func sendExternalQueue() {
 	for {
 		if len(externalQueues[0]) > 0 {
+			<- externalQueuesMutex
 			compareAndFixExternalQueues()
 			queuesTx <- externalQueues[0]
+			externalQueuesMutex <- true
 		}
 		time.Sleep(time.Millisecond * 100)			
 	}
@@ -108,9 +112,11 @@ func compareAndFixExternalQueues() {
 func updateExternalQueues() {
 	for {
 		q = <- queuesRx
+		<- externalQueuesMutex
 		for i := 0; i < constants.NumberOfElevators; i++ {
 			externalQueues[i] = q
 		}
+		externalQueuesMutex <- true
 	}
 }
 
