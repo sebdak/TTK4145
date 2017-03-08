@@ -1,7 +1,7 @@
 package constants
 
 const NumberOfFloors = 4
-const NumberOfElevators = 1
+const NumberOfElevators = 3
 const OrderPort = 25069
 const HeadingPort = OrderPort+1
 const QueuePort = OrderPort+2
@@ -34,7 +34,7 @@ const (
 type Order struct {
 	Floor      int
 	Direction  ElevatorDirection
-	ElevatorID int
+	ElevatorID string
 }
 
 type ElevatorHeading struct {
