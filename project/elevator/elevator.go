@@ -18,6 +18,7 @@ var newExternalOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
 
+
 func Run() {
 
 	for {
@@ -35,12 +36,28 @@ func Run() {
 			break
 
 		case constants.Moving:
-			lookForChangeInFloor()
+
+			//start timer first
+			failedToReachFloorTimer := time.NewTimer(time.Second*6)
+			
+
+			//lookForChangeInFloor will return false if the timer times out
+			if !lookForChangeInFloor(failedToReachFloorTimer){
+				//change state to "Broken". maybe make it more precice later
+				state = constants.Broken	
+			}
+
+
 			if LastFloor == CurrentOrder.Floor && driver.GetFloorSensor() != -1 {
+				
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
 			}
 
+			break
+		
+		case constants.Broken:
+			// go off network?
 			break
 		}
 
@@ -132,13 +149,24 @@ func setDirection() {
 	}
 }
 
-func lookForChangeInFloor() {
+func lookForChangeInFloor(failedToReachFloorTimer time.Timer) bool {
 	var currentFloorSignal = driver.GetFloorSensor()
-	if currentFloorSignal != -1 && LastFloor != currentFloorSignal {
 
-		LastFloor = currentFloorSignal
-		driver.SetFloorIndicator(LastFloor)
+	for {
+		
+		if currentFloorSignal != -1 && LastFloor != currentFloorSignal {
+			LastFloor = currentFloorSignal
+			driver.SetFloorIndicator(LastFloor)
 
+			return true
+		}
+
+		select {
+		case <- failedToReachFloorTimer.C:
+			return false
+		default:
+			//prevent timer from blocking
+		}
 	}
 }
 
