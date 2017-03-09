@@ -1,0 +1,38 @@
+
+
+
+Hvordan legges ny ordre til
+1. Man henter ut ids fra headingskøen  og går gjennom hvem av de som har kortest avstand til mottatt ordre.
+2. Den iden settes på ordren og legges i ext. queue
+
+
+
+
+Når en heis faller av nettet må ordrene dens redistribueres.
+Nettverk sjekker om heis er på.
+Faller den ut sendes det i en channel at nettet har gått til queue. Queue pusher hele extqueue til internal, elevator trenger ikke endre state. I tillegg må headings relatert til utfalt heis slettes. Master settes til false
+
+HallLys settes i lys av externalqueue, de andre i lys av hardware
+
+
+--------
+To-do
+- Fix elevator init when at floor 0
+- When pressing two hall buttons at same floor -> elevator doesnt handle both
+- when new queue received, check if ordersThatNeedToBeAdded are in the queue
+- Check if handledOrders are gone when receiving new queue.
+- for loop is dynamic
+
+--------------------------------------------------------------------------------
+Done list
+Når en heis ikke når etasjen innen så, så mange sekunder: ta den av nettverket så ordren blir håndtert. Done
+
+Ny ordre kommer inn
+1. Heis som fikk ordre spammer at den må legges til i ext. dersom den ikke finnes fra før
+3. Ny kø med ordre mottas og alle er happy
+
+Ordre er håndtert
+1. Legges til i ordre er håndtert.
+2. Spammes til ny kø er mottatt uten ordren.
+3. I mellomtiden ignoreres ordren fra internalqueue
+
