@@ -2,11 +2,6 @@ package constants
 
 const NumberOfFloors = 4
 const NumberOfElevators = 3
-const OrderPort = 25069
-const HeadingPort = OrderPort+1
-const QueuePort = OrderPort+2
-const PeersPort = OrderPort+3
-const MasterPort = OrderPort+4
 
 
 type ElevatorState int
@@ -14,9 +9,19 @@ type ElevatorDirection int
 type ElevatorButton int
 
 const (
+	NewExternalOrderPort = 25069 +iota
+	HandledExternalOrderPort 
+	HeadingPort
+	QueuePort
+	PeersPort 
+	MasterPort 
+)
+
+const (
 	Initializing ElevatorState = 1 + iota
 	AtFloor
 	Moving
+	Broken
 )
 
 const (

@@ -22,6 +22,11 @@ var elevatorHeadingTx chan constants.ElevatorHeading
 var elevatorHeadingRx chan constants.ElevatorHeading
 var queuesTx chan []constants.Order
 var queuesRx chan []constants.Order
+var externalOrderTx chan constants.Order
+var externalOrderRx chan constants.Order
+var handledExternalOrderTx chan constants.Order
+var handledExternalOrderRx chan constants.Order
+
 
 
 var p peers.PeerUpdate
@@ -34,7 +39,7 @@ func main(){
 }
 */
 
-func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order){
+func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order){
 	//Store channels for module communication
 	newOrderCh = newOrderChannel
 	newExternalOrderCh = newExternalOrderChannel
@@ -44,6 +49,11 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 	elevatorHeadingRx = elevatorHeadingRxChannel
 	queuesTx = queuesTxChannel
 	queuesRx = queuesRxChannel
+	externalOrderTx = externalOrderTxChannel
+	externalOrderRx = externalOrderRxChannel
+	handledExternalOrderTx = handledExternalOrderTxChannel
+	handledExternalOrderRx = handledExternalOrderRxChannel
+
 
 	//Tries to go online 
 	for(!testIfOnline()){
@@ -63,18 +73,32 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 
 	checkIfMasterIsAlive()
 
-	go transmitNewExternalOrders()
-
+	
 	go transceiveElevatorHeading()
+
+	go transceiveNewExternalOrder()
+
+	go transceiveHandledExternalOrder()
 
 	go transceiveQueues()
 
 }
 
 func transceiveElevatorHeading() {
-	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
-	go bcast.Receiver(constants.HeadingPort, elevatorHeadingRx)
+	go bcast.Transmitter(constants.NewExternalOrderPort, elevatorHeadingTx)
+	go bcast.Receiver(constants.NewExternalOrderPort, elevatorHeadingRx)
 }
+
+func transceiveNewExternalOrder() {
+	go bcast.Transmitter(constants., externalOrderTx)
+	go bcast.Receiver(constants.HeadingPort, externalOrderRx)
+}
+
+func transceiveHandledExternalOrder() {
+	go bcast.Transmitter(constants.HandledExternalOrderPort, handledExternalOrderTx)
+	go bcast.Receiver(constants.HandledExternalOrderPort, handledExternalOrderRx)
+}
+
 
 func lookForChangeInPeers() {
 	for {
@@ -137,9 +161,10 @@ func masterBroadcast() {
 		}
 		time.Sleep(time.Millisecond * 50)		
 	}
-
 }
 
+
+/*
 func transmitNewExternalOrders(){
 	orderTx := make(chan constants.Order)
 	go bcast.Transmitter(constants.OrderPort, orderTx)
@@ -161,6 +186,7 @@ func lookForOrderFromNetwork(){
 	}
 }
 
+*/
 /*
 type HelloMsg struct {
 	Message string
@@ -249,7 +275,8 @@ func StartUDPPeersBroadcast(){
 	}
 
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(constants.PeersPort, Id, peerTxEnable)
+
+	go peers.Transmitter(constants.PeersPort, Id, peerTxEnableCh)
 	go peers.Receiver(constants.PeersPort, peerUpdateCh)
 
 }

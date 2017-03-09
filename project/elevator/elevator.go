@@ -11,7 +11,6 @@ var LastFloor int
 var CurrentOrder constants.Order
 var Direction constants.ElevatorDirection = constants.DirStop
 var state constants.ElevatorState
-var ID int = 1
 
 var newOrderCh chan constants.Order
 var newExternalOrderCh chan constants.Order
@@ -37,16 +36,7 @@ func Run() {
 
 		case constants.Moving:
 
-			//start timer first
-			failedToReachFloorTimer := time.NewTimer(time.Second*6)
-			
-
-			//lookForChangeInFloor will return false if the timer times out
-			if !lookForChangeInFloor(failedToReachFloorTimer){
-				//change state to "Broken". maybe make it more precice later
-				state = constants.Broken	
-			}
-
+			secureFloorIsReached()
 
 			if LastFloor == CurrentOrder.Floor && driver.GetFloorSensor() != -1 {
 				
@@ -57,13 +47,14 @@ func Run() {
 			break
 		
 		case constants.Broken:
-			// go off network?
+			shutdownRoutine()
 			break
 		}
 
 		time.Sleep(time.Millisecond)
 	}
 }
+
 
 func debug() {
 	fmt.Println("Yo")
@@ -77,7 +68,7 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 	handledOrderCh = handledOrderChannel
 
 	//Elevator stuff
-	CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: -1}
+	CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: "-1"}
 	state = constants.Initializing
 	driver.InitElev()
 
@@ -88,6 +79,18 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 	state = constants.AtFloor
 	go lookForButtonPress()
 	go lookForNewQueueOrder()
+}
+
+
+func secureFloorIsReached() {
+	//start timer first
+	failedToReachFloorTimer := time.NewTimer(time.Second*6)	
+
+	//lookForChangeInFloor will return false if the timer times out
+	if !lookForChangeInFloor(failedToReachFloorTimer){
+		//change state to "Broken". maybe make it more precice later
+		state = constants.Broken	
+	}
 }
 
 func orderedFloorReachedRoutine() {
@@ -158,6 +161,7 @@ func lookForChangeInFloor(failedToReachFloorTimer time.Timer) bool {
 			LastFloor = currentFloorSignal
 			driver.SetFloorIndicator(LastFloor)
 
+			failedToReachFloorTimer.Stop()
 			return true
 		}
 
@@ -172,7 +176,6 @@ func lookForChangeInFloor(failedToReachFloorTimer time.Timer) bool {
 
 func lookForButtonPress() {
 	var newOrder constants.Order
-	newOrder.ElevatorID = 1
 
 	for {
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
@@ -181,7 +184,6 @@ func lookForButtonPress() {
 				driver.SetButtonLamp(constants.ButtonCommand, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirStop
-				newOrder.ElevatorID = ID
 				newOrderCh <- newOrder
 			}
 
@@ -205,4 +207,16 @@ func lookForButtonPress() {
 
 		time.Sleep(time.Millisecond * 10)
 	}
+}
+
+func shutdownRoutine() {
+	//go off network
+	peerTxEnableCh <- false
+
+	//spawn new process
+	_ , _ := exec.Command("gnome-terminal", "-x", "go", "run", "main.go").Output()
+
+	//kill this process
+	proc, _ := os.FindProcess(os.Getpid())
+	proc.Kill()
 }
