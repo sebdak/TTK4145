@@ -17,6 +17,7 @@ var Master bool = false
 var peerUpdateCh chan peers.PeerUpdate
 var newOrderCh chan constants.Order 
 var newExternalOrderCh chan constants.Order
+var peerDisconnectsCh chan string
 
 var elevatorHeadingTx chan constants.ElevatorHeading
 var elevatorHeadingRx chan constants.ElevatorHeading
@@ -29,20 +30,14 @@ var handledExternalOrderRx chan constants.Order
 
 
 
-var p peers.PeerUpdate
+var PeersInfo peers.PeerUpdate
 var Id string
 
-/*
-func main(){
-	//StartUDPPeersBroadcast()
-	InitNetwork(make(chan constants.Order))
-}
-*/
-
-func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order){
+func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, peerDisconnectsChannel chan string, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order){
 	//Store channels for module communication
 	newOrderCh = newOrderChannel
 	newExternalOrderCh = newExternalOrderChannel
+	peerDisconnectsCh = peerDisconnectsChannel
 
 	//Store channels for module-network communication
 	elevatorHeadingTx = elevatorHeadingTxChannel
@@ -73,7 +68,7 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 
 	checkIfMasterIsAlive()
 
-	
+
 	go transceiveElevatorHeading()
 
 	go transceiveNewExternalOrder()
@@ -102,8 +97,8 @@ func transceiveHandledExternalOrder() {
 
 func lookForChangeInPeers() {
 	for {
-		p = <- peerUpdateCh
-		lookForLostElevator()	
+		PeersInfo = <- peerUpdateCh
+		handleLostElevator()	
 	}
 }
 
@@ -112,31 +107,13 @@ func transceiveQueues() {
 	go bcast.Receiver(constants.QueuePort, queuesRx)
 }
 
-func checkIfMasterIsAlive() {
-	if(Master != true){
-
-
-		masterRx := make(chan string)
-		go bcast.Receiver(constants.MasterPort, masterRx)
-		timer := time.NewTimer(time.Millisecond * 500)
-		
-		select {
-		case <- timer.C:
-		chooseMasterSlave()
-		case <- masterRx:
-			Master = false
-			fmt.Println("other master on network")
-		}
-
-	}
-}
 
 func chooseMasterSlave() {
-	smallestID := p.Peers[0]
+	smallestID := PeersInfo.Peers[0]
 
-	for i := 1; i < len(p.Peers); i++ {
-		if p.Peers[i] < smallestID {
-			smallestID = p.Peers[i]
+	for i := 1; i < len(PeersInfo.Peers); i++ {
+		if PeersInfo.Peers[i] < smallestID {
+			smallestID = PeersInfo.Peers[i]
 		}
 	}
 
@@ -164,83 +141,22 @@ func masterBroadcast() {
 }
 
 
-/*
-func transmitNewExternalOrders(){
-	orderTx := make(chan constants.Order)
-	go bcast.Transmitter(constants.OrderPort, orderTx)
 
-	for{
-		order := <- newExternalOrderCh
-		orderTx <- order
-		time.Sleep(time.Millisecond)
-	}
-}
-
-func lookForOrderFromNetwork(){
-	orderRx := make(chan constants.Order)
-	go bcast.Receiver(constants.OrderPort, orderRx)
-
-	for{
-		order := <- orderRx
-		newOrderCh <- order
-	}
-}
-
-*/
-/*
-type HelloMsg struct {
-	Message string
-	Iter    int
-}
-
-
-func DebugSendMessage(){
-	master := true
-	//counter := 0
-	//broadcast which state you are in
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
-	peerUpdateCh := make(chan peers.PeerUpdate)
-
-	
-	go StartUDPBroadcast(helloTx, helloRx, peerUpdateCh)
-	iter := 0
-	go func() {
-		for {
-			if master {
-				iter++
-				MsgSend := HelloMsg{Message: "Hello", Iter: iter}
-				helloTx <- MsgSend
-				time.Sleep(4 * time.Second)
-			}
-		}
-	}()
-
-	for {
-
-		select {
-
-		case rx := <-helloRx:
-
-			message := rx.Message
-			iter = rx.Iter
-			fmt.Println("RECEIVED: ", iter, message)
-
-		}
-
-	}
-}
-*/
-
-
-func lookForLostElevator(){
-	if(len(p.Lost) > 0){
+func handleLostElevator(){
+	if(len(PeersInfo.Lost) > 0){
 		if(testIfOnline()){
 			//Elevator is still alive
 			checkIfMasterIsAlive()
+			peerDisconnectsCh <- PeersInfo.Lost[0]
+
 		} else{
 			fmt.Println("Elevator is off network")
+			Master = false
+			//dump external queue to internal
+			peerDisconnectsCh <- PeersInfo.Lost[0]
 		}
+
+		
 	}
 	time.Sleep(time.Millisecond)
 }
@@ -251,6 +167,30 @@ func testIfOnline() bool {
 			return false
 		}
 	return true
+}
+
+
+func checkIfMasterIsAlive() {
+	if(Master != true){
+
+
+		masterRx := make(chan string)
+		go bcast.Receiver(constants.MasterPort, masterRx)
+		timer := time.NewTimer(time.Millisecond * 500)
+		
+		select {
+		case <- timer.C:
+		chooseMasterSlave()
+		case <- masterRx:
+			Master = false
+			fmt.Println("other master on network")
+		}
+
+	}
+}
+
+func redistLostElevetorsOrdersIfMaster() {
+	
 }
 
 func StartUDPPeersBroadcast(){

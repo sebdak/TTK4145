@@ -5,6 +5,7 @@ import (
 	driver "../driver"
 	"fmt"
 	"time"
+	"reflect"
 )
 
 var LastFloor int
@@ -16,6 +17,7 @@ var newOrderCh chan constants.Order
 var newExternalOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
+var hallLightCh chan []constants.Order
 
 
 func Run() {
@@ -56,16 +58,13 @@ func Run() {
 }
 
 
-func debug() {
-	fmt.Println("Yo")
-}
-
-func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order) {
+func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, hallLightChannel chan []constants.Order) {
 	//Add channels
 	newOrderCh = newOrderChannel
 	newExternalOrderCh = newExternalOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
+	hallLightCh = hallLightChannel
 
 	//Elevator stuff
 	CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: "-1"}
@@ -79,6 +78,42 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 	state = constants.AtFloor
 	go lookForButtonPress()
 	go lookForNewQueueOrder()
+	go setHallLights()
+}
+
+
+func setHallLights() {
+	qCopy := make([]constants.Order)
+	for {
+		q := <- hallLightCh
+
+		if reflect.DeepEqual(q, qCopy) == false {
+			for i := 0; i < constants.NumberOfFloors; i++ {
+				for j := 0; j < len(q); j++ {
+					if i == q[j].Floor && q[j].Direction == constants.DirUp {
+						//turn on for dir up
+						driver.SetButtonLamp(constants.ButtonCallUp, i, 1)
+						break
+					} else {
+						//turn off light for dir up
+						driver.SetButtonLamp(constants.ButtonCallUp, i, 0)
+					}
+				}
+		
+				for j := 0; j < len(q); j++ {
+					if i == q[j].Floor && q[j].Direction == constants.DirDown {
+						//turn on for dir down
+						driver.SetButtonLamp(constants.ButtonCallDown, i, 1)
+						break
+					} else {
+						//turn off light dir down
+						driver.SetButtonLamp(constants.ButtonCallDown, i, 1)
+					}
+				}
+			}
+			qCopy = q
+		}
+	}
 }
 
 
@@ -107,11 +142,6 @@ func orderedFloorReachedRoutine() {
 }
 
 func setLights() {
-	if CurrentOrder.Direction == constants.DirUp {
-		driver.SetButtonLamp(constants.ButtonCallUp, LastFloor, 0)
-	} else if CurrentOrder.Direction == constants.DirDown {
-		driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
-	}
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
 }
 
@@ -188,7 +218,7 @@ func lookForButtonPress() {
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
-				driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
+				//driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirUp
 				newExternalOrderCh <- newOrder
@@ -196,7 +226,7 @@ func lookForButtonPress() {
 			}
 
 			if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
-				driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
+				//driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirDown
 				newExternalOrderCh <- newOrder

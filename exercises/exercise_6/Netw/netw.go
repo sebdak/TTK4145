@@ -72,7 +72,6 @@ func StartUDPBroadcast(helloTx chan HelloMsg, helloRx chan HelloMsg, peerUpdateC
 
 	fmt.Println("Started")
 	for {
-		/*
 			select {
 			case p := <-peerUpdateCh:
 				fmt.Printf("Peer update:\n")
@@ -84,6 +83,5 @@ func StartUDPBroadcast(helloTx chan HelloMsg, helloRx chan HelloMsg, peerUpdateC
 						fmt.Printf("Received: %#v\n", a)
 
 			}
-		*/
 	}
 }

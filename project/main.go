@@ -13,6 +13,8 @@ func main() {
 	newExternalOrderChannel := make(chan constants.Order)
 	nextFloorChannel := make(chan constants.Order)
 	handledOrderChannel := make(chan constants.Order)
+	peerDisconnectsChannel := make(chan string)
+	hallLightChannel := make(chan []constants.Order)
 
 	elevatorHeadingTxChannel := make(chan constants.ElevatorHeading)
 	elevatorHeadingRxChannel := make(chan constants.ElevatorHeading)
@@ -26,9 +28,11 @@ func main() {
 	elevator.InitElev(newOrderChannel,
 		newExternalOrderChannel, 
 		nextFloorChannel, 
-		handledOrderChannel)
+		handledOrderChannel,
+		hallLightChannel)
 	network.InitNetwork(newOrderChannel, 
-		newExternalOrderChannel, 
+		newExternalOrderChannel,
+		peerDisconnectsChannel, 
 		elevatorHeadingTxChannel, 
 		elevatorHeadingRxChannel, 
 		queuesTxChannel, 
@@ -36,10 +40,12 @@ func main() {
 		externalOrderTx,
 		externalOrderRx,
 		handledExternalOrderTx,
-		handledExternalOrderRx)
+		handledExternalOrderRx,)
 	queue.InitQueue(newOrderChannel, 
 		nextFloorChannel, 
-		handledOrderChannel, 
+		handledOrderChannel,
+		peerDisconnectsChannel,
+		hallLightChannel, 
 		elevatorHeadingTxChannel, 
 		elevatorHeadingRxChannel, 
 		queuesTxChannel, 

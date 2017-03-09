@@ -2,6 +2,7 @@ package constants
 
 const NumberOfFloors = 4
 const NumberOfElevators = 3
+const QueueCopies = 3
 
 
 type ElevatorState int
