@@ -412,7 +412,7 @@ func spamExternalOrdersThatNeedToBeAdded() {
 	}
 }
 
-func updateOrdersThatNeedToBeAdded() {
+func supdateOrdersThatNeedToBeAdded() {
 	indexesToDelete []int = make([]int)
 	<- ordersThatNeedToBeAddedMutex
 	
