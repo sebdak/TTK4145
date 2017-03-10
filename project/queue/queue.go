@@ -95,7 +95,7 @@ func initQueues() {
 // -----------Sending and update of externalqueue----------------------------------
 func sendExternalQueue() {
 	for {
-		if len(externalQueues[0]) > 0 && network.Master == true {
+		if network.Master == true {
 			<-externalQueuesMutex
 			compareAndFixExternalQueues()
 			queuesTx <- externalQueues[0]
@@ -269,7 +269,6 @@ func handleCompletedCabOrder() {
 	for {
 
 		order := <-handledOrderCh
-
 		//Check if order was external
 		if order.Direction != constants.DirStop && !orderIsInHandledList(order) {
 			<-ordersThatAreHandledMutex

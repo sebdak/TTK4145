@@ -85,8 +85,7 @@ func setHallLights() {
 	var qCopy []constants.Order
 	for {
 		q := <-hallLightCh
-
-		if reflect.DeepEqual(q, qCopy) == false {
+		if reflect.DeepEqual(q, qCopy) == false && len(q) > 0 {
 			for i := 0; i < constants.NumberOfFloors; i++ {
 				for j := 0; j < len(q); j++ {
 					if q[j].Floor == i && q[j].Direction == constants.DirUp {
@@ -110,6 +109,12 @@ func setHallLights() {
 					}
 				}
 			}
+		} else {
+			for i := 0; i < constants.NumberOfFloors; i++ {
+				driver.SetButtonLamp(constants.ButtonCallUp, i, 0)
+				driver.SetButtonLamp(constants.ButtonCallDown, i, 0)
+			}
+
 			qCopy = q
 		}
 	}
@@ -156,9 +161,11 @@ func orderedFloorReachedRoutine() {
 	fmt.Println("orderedFloorReachedRoutine sender håndtert ordre", CurrentOrder)
 	handledOrderCh <- CurrentOrder
 
-	//Start floortimer
+	//Start floortimer and open doors
+	driver.SetDoorOpenLamp(1)
 	waitAtFloorTimer := time.NewTimer(time.Second * 2)
 	<-waitAtFloorTimer.C
+	driver.SetDoorOpenLamp(0)
 }
 
 func setCabLights() {
