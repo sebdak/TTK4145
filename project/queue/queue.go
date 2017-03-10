@@ -537,6 +537,7 @@ func updateElevatorNextOrder() {
 			}
 
 		}
+		fmt.Println("best order: ", bestFloorSoFar)
 		nextFloorCh <- bestFloorSoFar
 	}
 
