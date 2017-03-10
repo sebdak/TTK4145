@@ -192,9 +192,11 @@ func addExternalOrdersForThisElevator() {
 		newOrder := true
 		if externalQueues[0][i].ElevatorID == network.Id {
 			if !checkIfNewCabOrder(externalQueues[0][i]) {
-					newOrder = false
-			}else {
-				//Check if new external order has not just been handled
+				newOrder = false
+			}
+
+			//Check if new external order has not just been handled
+			if newOrder == true {
 				for j := 0; j < len(ordersThatAreHandled); j++ {
 					if externalQueues[0][i] == ordersThatAreHandled[j] {
 						newOrder = false
@@ -202,7 +204,7 @@ func addExternalOrdersForThisElevator() {
 					}
 				}
 			}
-	
+
 			if newOrder == true {
 				<-internalQueueMutex
 				internalQueue = append(internalQueue, externalQueues[0][i])
@@ -212,7 +214,6 @@ func addExternalOrdersForThisElevator() {
 				internalQueueMutex <- true
 			}
 		}
-
 	}
 }
 
