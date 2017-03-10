@@ -39,6 +39,7 @@ var headings map[string]constants.ElevatorHeading = make(map[string]constants.El
 
 func InitQueue(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, peerDisconnectsChannel chan string, hallLightChannel chan []constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order) {
 	//Add channels for modulecommunication
+	fmt.Println("Started queue")
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
@@ -99,7 +100,6 @@ func sendExternalQueue() {
 			compareAndFixExternalQueues()
 			queuesTx <- externalQueues[0]
 			externalQueuesMutex <- true
-			fmt.Println("Sending externalqueue to network")
 		}
 		time.Sleep(time.Millisecond * 50)
 	}
@@ -108,11 +108,9 @@ func sendExternalQueue() {
 func getAndUpdateExternalQueues() {
 	for {
 		q := <-queuesRx
-		fmt.Println("Mottok ny eksternkø")
 		//Send external queue for elevator to set hall lights
 		qCopy := q
 		hallLightCh <- qCopy
-		fmt.Println("Sendte ny eksternkø til elevator for å sette lys")
 
 		<-externalQueuesMutex
 		for i := 0; i < constants.QueueCopies; i++ {
@@ -132,12 +130,10 @@ func compareAndFixExternalQueues() {
 	count := 0
 	var correctQueueIndex int
 	var majority int = constants.QueueCopies/2 + 1
-	fmt.Println("majority: ", majority)
 
 	for i := 0; i < constants.QueueCopies; i++ {
 		for j := 0; j < constants.QueueCopies; j++ {
 			if reflect.DeepEqual(externalQueues[i], externalQueues[j]) {
-				//fmt.Println("Reflect: ", reflect.DeepEqual(externalQueues[i], externalQueues[j]))
 				count++
 			}
 		}
@@ -184,7 +180,6 @@ func getElevatorHeadings() {
 	var heading constants.ElevatorHeading
 	for {
 		heading = <-elevatorHeadingRx
-		fmt.Println("Heading ", heading.LastFloor, heading.Id)
 		headings[heading.Id] = heading
 	}
 }
@@ -198,8 +193,6 @@ func addExternalOrdersForThisElevator() {
 		if externalQueues[0][i].ElevatorID == network.Id {
 			if !checkIfNewCabOrder(externalQueues[0][i]) {
 				newOrder = false
-				fmt.Println("Ignorerte ordre fordi den ligger i internkø fra før")
-				break
 			}
 		}
 
@@ -217,9 +210,11 @@ func addExternalOrdersForThisElevator() {
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, externalQueues[0][i])
 			internalQueueMutex <- true
+			fmt.Println("Added new order: ", externalQueues[0][i])
 			updateElevatorNextOrder()
-			fmt.Println("Tok eksternordre som tilhører denne heisen: ", externalQueues[0][i])
+			fmt.Println("Next order is: ", elevator.CurrentOrder)
 		}
+
 	}
 }
 
@@ -246,11 +241,9 @@ func handleExternalButtonOrder() {
 
 		order := <-newExternalOrderCh
 		if checkIfNewExternalOrder(order) && !orderIsInNeedToBeAddedList(order) {
-			fmt.Println("Adding order to needs to be added list", order)
 			<-ordersThatNeedToBeAddedMutex
 			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 			ordersThatNeedToBeAddedMutex <- true
-			fmt.Println("Sent new external order to network", order)
 		}
 
 	}
@@ -278,18 +271,13 @@ func handleCompletedCabOrder() {
 		order := <-handledOrderCh
 
 		//Check if order was external
-		fmt.Println("1")
 		if order.Direction != constants.DirStop && !orderIsInHandledList(order) {
-			fmt.Println("1")
 			<-ordersThatAreHandledMutex
 			ordersThatAreHandled = append(ordersThatAreHandled, order)
 			ordersThatAreHandledMutex <- true
 		}
-		fmt.Println("1")
 		deleteOrderFromInternalQueue(order)
-		fmt.Println("1")
 		updateElevatorNextOrder()
-		fmt.Println("1")
 	}
 }
 
@@ -322,12 +310,15 @@ func deleteOrderFromInternalQueue(order constants.Order) {
 func deleteOrderFromExternalQueue(order constants.Order) {
 	<-externalQueuesMutex
 
-	for i := 0; i < len(externalQueues[0]); i++ {
-		if externalQueues[0][i].Floor == order.Floor && (externalQueues[0][i].Direction == order.Direction || externalQueues[0][i].Direction == constants.DirStop) {
-			for j := 0; j < constants.QueueCopies; j++ {
-				externalQueues[j] = append(externalQueues[j][:i], externalQueues[j][(i+1):]...)
+	for k := 0; k < constants.QueueCopies; k++ {
+
+		for i := 0; i < len(externalQueues[k]); i++ {
+			if externalQueues[k][i].Floor == order.Floor && (externalQueues[k][i].Direction == order.Direction || externalQueues[k][i].Direction == constants.DirStop) {
+				for j := 0; j < constants.QueueCopies; j++ {
+					externalQueues[j] = append(externalQueues[j][:i], externalQueues[j][(i+1):]...)
+				}
+				break
 			}
-			break
 		}
 	}
 
@@ -415,12 +406,17 @@ func handlePeerDisconnects() {
 
 func spamExternalOrdersThatAreHandled() {
 	for {
+		<-ordersThatAreHandledMutex
+
 		if len(ordersThatAreHandled) > 0 {
 			for i := 0; i < len(ordersThatAreHandled); i++ {
 				handledExternalOrderTx <- ordersThatAreHandled[i]
 				time.Sleep(time.Millisecond)
 			}
 		}
+
+		ordersThatAreHandledMutex <- true
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
@@ -431,7 +427,6 @@ func spamExternalOrdersThatNeedToBeAdded() {
 		if len(ordersThatNeedToBeAdded) > 0 {
 			for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 				externalOrderTx <- ordersThatNeedToBeAdded[i]
-				//fmt.Println("Spamming that this order needs to be added", ordersThatNeedToBeAdded[i])
 			}
 		}
 
@@ -446,7 +441,7 @@ func updateOrdersThatNeedToBeAdded() {
 
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 		for j := 0; j < len(externalQueues[0]); j++ {
-			if ordersThatNeedToBeAdded[i] == externalQueues[0][j] {
+			if ordersThatNeedToBeAdded[i].Floor == externalQueues[0][j].Floor && ordersThatNeedToBeAdded[i].Direction == externalQueues[0][j].Direction {
 				indexesToDelete = append(indexesToDelete, i)
 			}
 
@@ -468,7 +463,7 @@ func updateOrdersThatAreHandled() {
 	for i := 0; i < len(ordersThatAreHandled); i++ {
 		safeToDelete := true
 		for j := 0; j < len(externalQueues[0]); j++ {
-			if ordersThatAreHandled[i] == externalQueues[0][j] {
+			if ordersThatAreHandled[i].Floor == externalQueues[0][j].Floor && ordersThatAreHandled[i].Direction == externalQueues[0][j].Direction {
 				safeToDelete = false
 				break
 			}
@@ -498,7 +493,7 @@ func getExternalOrdersThatAreHandled() {
 			order := <-handledExternalOrderRx
 			//Order may have been removed by master before slaves know it
 			if checkIfNewExternalOrder(order) == false {
-
+				deleteOrderFromExternalQueue(order)
 			}
 		}
 	}
@@ -507,13 +502,10 @@ func getExternalOrdersThatAreHandled() {
 func getExternalOrdersThatNeedToBeAdded() {
 	for {
 		if network.Master == true {
-			fmt.Println("Venter på spammede ordre som må legges til")
 			order := <-externalOrderRx
-			fmt.Println("Received spammed order: ", order)
 			//Check because master can have already handled order while slave still is spamming
 			if checkIfNewExternalOrder(order) == true {
 				order.ElevatorID = chooseElevatorThatTakesOrder(order)
-				fmt.Println("Elevator that takes spammed order is: ", order.ElevatorID)
 				<-externalQueuesMutex
 				for i := 0; i < constants.QueueCopies; i++ {
 					externalQueues[i] = append(externalQueues[i], order)
@@ -546,7 +538,6 @@ func updateElevatorNextOrder() {
 			}
 
 		}
-		fmt.Println("Neste ordre er: ", bestFloorSoFar)
 		nextFloorCh <- bestFloorSoFar
 	}
 

@@ -89,7 +89,7 @@ func setHallLights() {
 		if reflect.DeepEqual(q, qCopy) == false {
 			for i := 0; i < constants.NumberOfFloors; i++ {
 				for j := 0; j < len(q); j++ {
-					if i == q[j].Floor && q[j].Direction == constants.DirUp {
+					if q[j].Floor == i && q[j].Direction == constants.DirUp {
 						//turn on for dir up
 						driver.SetButtonLamp(constants.ButtonCallUp, i, 1)
 						break
@@ -100,13 +100,13 @@ func setHallLights() {
 				}
 
 				for j := 0; j < len(q); j++ {
-					if i == q[j].Floor && q[j].Direction == constants.DirDown {
+					if q[j].Floor == i && q[j].Direction == constants.DirDown {
 						//turn on for dir down
 						driver.SetButtonLamp(constants.ButtonCallDown, i, 1)
 						break
 					} else {
 						//turn off light dir down
-						driver.SetButtonLamp(constants.ButtonCallDown, i, 1)
+						driver.SetButtonLamp(constants.ButtonCallDown, i, 0)
 					}
 				}
 			}
