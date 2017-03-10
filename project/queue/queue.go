@@ -193,16 +193,15 @@ func addExternalOrdersForThisElevator() {
 		if externalQueues[0][i].ElevatorID == network.Id {
 			if !checkIfNewCabOrder(externalQueues[0][i]) {
 				newOrder = false
-			}
-
-			//Check if new external order has not just been handled
-			if newOrder == true {
+			}else if newOrder == true {
+				//Check if new external order has not just been handled
 				for j := 0; j < len(ordersThatAreHandled); j++ {
 					if externalQueues[0][i] == ordersThatAreHandled[j] {
 						newOrder = false
 						break
 					}
 				}
+				
 			}
 
 			if newOrder == true {
