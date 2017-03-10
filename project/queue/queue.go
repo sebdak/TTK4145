@@ -245,7 +245,7 @@ func handleExternalButtonOrder() {
 	for {
 
 		order := <-newExternalOrderCh
-		if checkIfNewExternalOrder(order) && !orderIsInNeedToBeAdded(order) {
+		if checkIfNewExternalOrder(order) && !orderIsInNeedToBeAddedList(order) {
 			fmt.Println("Adding order to needs to be added list", order)
 			<-ordersThatNeedToBeAddedMutex
 			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
@@ -256,7 +256,7 @@ func handleExternalButtonOrder() {
 	}
 }
 
-func orderIsInNeedToBeAdded(order constants.Order) bool {
+func orderIsInNeedToBeAddedList(order constants.Order) bool {
 	<-ordersThatNeedToBeAddedMutex
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 		if ordersThatNeedToBeAdded[i] == order {
@@ -278,15 +278,32 @@ func handleCompletedCabOrder() {
 		order := <-handledOrderCh
 
 		//Check if order was external
-		if order.Direction != constants.DirStop {
+		fmt.Println("1")
+		if order.Direction != constants.DirStop && !orderIsInHandledList(order) {
+			fmt.Println("1")
 			<-ordersThatAreHandledMutex
 			ordersThatAreHandled = append(ordersThatAreHandled, order)
-			ordersThatNeedToBeAddedMutex <- true
+			ordersThatAreHandledMutex <- true
 		}
+		fmt.Println("1")
 		deleteOrderFromInternalQueue(order)
+		fmt.Println("1")
 		updateElevatorNextOrder()
-
+		fmt.Println("1")
 	}
+}
+
+func orderIsInHandledList(order constants.Order) bool {
+	<-ordersThatAreHandledMutex
+	for i := 0; i < len(ordersThatAreHandled); i++ {
+		if ordersThatAreHandled[i] == order {
+			ordersThatAreHandledMutex <- true
+			return true
+		}
+	}
+
+	ordersThatAreHandledMutex <- true
+	return false
 }
 
 func deleteOrderFromInternalQueue(order constants.Order) {

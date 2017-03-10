@@ -149,10 +149,11 @@ func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 
 func orderedFloorReachedRoutine() {
 	driver.SetMotorDir(constants.DirStop)
-	setLights()
+	setCabLights()
 	setDirection()
 
 	//Tell queue order has been handled
+	fmt.Println("orderedFloorReachedRoutine sender håndtert ordre", CurrentOrder)
 	handledOrderCh <- CurrentOrder
 
 	//Start floortimer
@@ -160,7 +161,7 @@ func orderedFloorReachedRoutine() {
 	<-waitAtFloorTimer.C
 }
 
-func setLights() {
+func setCabLights() {
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
 }
 
