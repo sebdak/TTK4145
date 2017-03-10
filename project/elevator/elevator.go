@@ -4,8 +4,8 @@ import (
 	constants "../constants"
 	driver "../driver"
 	"fmt"
-	"time"
 	"reflect"
+	"time"
 )
 
 var LastFloor int
@@ -18,7 +18,6 @@ var newExternalOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
 var hallLightCh chan []constants.Order
-
 
 func Run() {
 
@@ -41,13 +40,13 @@ func Run() {
 			secureFloorIsReached()
 
 			if LastFloor == CurrentOrder.Floor && driver.GetFloorSensor() != -1 {
-				
+
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
 			}
 
 			break
-		
+
 		case constants.Broken:
 			shutdownRoutine()
 			break
@@ -56,7 +55,6 @@ func Run() {
 		time.Sleep(time.Millisecond)
 	}
 }
-
 
 func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, hallLightChannel chan []constants.Order) {
 	//Add channels
@@ -81,11 +79,10 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 	go setHallLights()
 }
 
-
 func setHallLights() {
 	qCopy := make([]constants.Order)
 	for {
-		q := <- hallLightCh
+		q := <-hallLightCh
 
 		if reflect.DeepEqual(q, qCopy) == false {
 			for i := 0; i < constants.NumberOfFloors; i++ {
@@ -99,7 +96,7 @@ func setHallLights() {
 						driver.SetButtonLamp(constants.ButtonCallUp, i, 0)
 					}
 				}
-		
+
 				for j := 0; j < len(q); j++ {
 					if i == q[j].Floor && q[j].Direction == constants.DirDown {
 						//turn on for dir down
@@ -116,15 +113,14 @@ func setHallLights() {
 	}
 }
 
-
 func secureFloorIsReached() {
 	//start timer first
-	failedToReachFloorTimer := time.NewTimer(time.Second*6)	
+	failedToReachFloorTimer := time.NewTimer(time.Second * 6)
 
 	//lookForChangeInFloor will return false if the timer times out
-	if !lookForChangeInFloor(failedToReachFloorTimer){
+	if !lookForChangeInFloor(failedToReachFloorTimer) {
 		//change state to "Broken". maybe make it more precice later
-		state = constants.Broken	
+		state = constants.Broken
 	}
 }
 
@@ -186,7 +182,7 @@ func lookForChangeInFloor(failedToReachFloorTimer time.Timer) bool {
 	var currentFloorSignal = driver.GetFloorSensor()
 
 	for {
-		
+
 		if currentFloorSignal != -1 && LastFloor != currentFloorSignal {
 			LastFloor = currentFloorSignal
 			driver.SetFloorIndicator(LastFloor)
@@ -196,7 +192,7 @@ func lookForChangeInFloor(failedToReachFloorTimer time.Timer) bool {
 		}
 
 		select {
-		case <- failedToReachFloorTimer.C:
+		case <-failedToReachFloorTimer.C:
 			return false
 		default:
 			//prevent timer from blocking
@@ -244,7 +240,7 @@ func shutdownRoutine() {
 	peerTxEnableCh <- false
 
 	//spawn new process
-	_ , _ := exec.Command("gnome-terminal", "-x", "go", "run", "main.go").Output()
+	_, _ := exec.Command("gnome-terminal", "-x", "go", "run", "main.go").Output()
 
 	//kill this process
 	proc, _ := os.FindProcess(os.Getpid())

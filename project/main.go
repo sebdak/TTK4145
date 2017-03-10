@@ -3,8 +3,8 @@ package main
 import (
 	constants "./constants"
 	elevator "./elevator"
-	queue "./queue"
 	network "./network"
+	queue "./queue"
 )
 
 func main() {
@@ -26,29 +26,29 @@ func main() {
 	handledExternalOrderRx := make(chan constants.Order)
 
 	elevator.InitElev(newOrderChannel,
-		newExternalOrderChannel, 
-		nextFloorChannel, 
+		newExternalOrderChannel,
+		nextFloorChannel,
 		handledOrderChannel,
 		hallLightChannel)
-	network.InitNetwork(newOrderChannel, 
+	network.InitNetwork(newOrderChannel,
 		newExternalOrderChannel,
-		peerDisconnectsChannel, 
-		elevatorHeadingTxChannel, 
-		elevatorHeadingRxChannel, 
-		queuesTxChannel, 
+		peerDisconnectsChannel,
+		elevatorHeadingTxChannel,
+		elevatorHeadingRxChannel,
+		queuesTxChannel,
 		queuesRxChannel,
 		externalOrderTx,
 		externalOrderRx,
 		handledExternalOrderTx,
-		handledExternalOrderRx,)
-	queue.InitQueue(newOrderChannel, 
-		nextFloorChannel, 
+		handledExternalOrderRx)
+	queue.InitQueue(newOrderChannel,
+		nextFloorChannel,
 		handledOrderChannel,
 		peerDisconnectsChannel,
-		hallLightChannel, 
-		elevatorHeadingTxChannel, 
-		elevatorHeadingRxChannel, 
-		queuesTxChannel, 
+		hallLightChannel,
+		elevatorHeadingTxChannel,
+		elevatorHeadingRxChannel,
+		queuesTxChannel,
 		queuesRxChannel,
 		externalOrderTx,
 		externalOrderRx,

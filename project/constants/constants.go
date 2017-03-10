@@ -4,18 +4,17 @@ const NumberOfFloors = 4
 const NumberOfElevators = 3
 const QueueCopies = 3
 
-
 type ElevatorState int
 type ElevatorDirection int
 type ElevatorButton int
 
 const (
-	NewExternalOrderPort = 25069 +iota
-	HandledExternalOrderPort 
+	NewExternalOrderPort = 25069 + iota
+	HandledExternalOrderPort
 	HeadingPort
 	QueuePort
-	PeersPort 
-	MasterPort 
+	PeersPort
+	MasterPort
 )
 
 const (
@@ -44,7 +43,7 @@ type Order struct {
 }
 
 type ElevatorHeading struct {
-	LastFloor int
+	LastFloor    int
 	CurrentOrder Order
-	Id string
+	Id           string
 }

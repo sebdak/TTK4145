@@ -70,11 +70,8 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 
 
 	go transceiveElevatorHeading()
-
 	go transceiveNewExternalOrder()
-
 	go transceiveHandledExternalOrder()
-
 	go transceiveQueues()
 
 }
@@ -129,6 +126,7 @@ func chooseMasterSlave() {
 	}
 }
 
+
 func masterBroadcast() {
 	masterTx := make(chan string)
 	go bcast.Transmitter(constants.MasterPort, masterTx)
@@ -139,7 +137,6 @@ func masterBroadcast() {
 		time.Sleep(time.Millisecond * 50)		
 	}
 }
-
 
 
 func handleLostElevator(){
@@ -160,6 +157,7 @@ func handleLostElevator(){
 	}
 	time.Sleep(time.Millisecond)
 }
+
 
 func testIfOnline() bool {
 	_, err := localip.LocalIP()
@@ -189,9 +187,6 @@ func checkIfMasterIsAlive() {
 	}
 }
 
-func redistLostElevetorsOrdersIfMaster() {
-	
-}
 
 func StartUDPPeersBroadcast(){
 	// Our id can be anything. Here we pass it on the command line, using
@@ -218,5 +213,4 @@ func StartUDPPeersBroadcast(){
 
 	go peers.Transmitter(constants.PeersPort, Id, peerTxEnableCh)
 	go peers.Receiver(constants.PeersPort, peerUpdateCh)
-
 }

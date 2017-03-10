@@ -72,6 +72,11 @@ func InitQueue(newOrderChannel chan constants.Order, nextFloorChannel chan const
 
 	go sendExternalQueue()
 	go getAndUpdateExternalQueues()
+
+	go handlePeerDisconnects()
+
+	go getExternalOrdersThatAreHandled()
+	go getExternalOrdersThatNeedToBeAdded()
 }
 
 
@@ -220,7 +225,6 @@ func addExternalOrdersForThisElevator() {
 		newOrder = true
 	}
 	internalQueueMutex <- true
-
 }
 
 func handleNewCabOrder() {
@@ -259,6 +263,7 @@ func handleExternalButtonOrder() {
 
 
 func handleCompletedCabOrder() {
+	ordersThatAreHandled = make([]constants.Order)
 	go spamExternalOrdersThatAreHandled()
 
 	for {
@@ -412,7 +417,7 @@ func spamExternalOrdersThatNeedToBeAdded() {
 	}
 }
 
-func supdateOrdersThatNeedToBeAdded() {
+func spamupdateOrdersThatNeedToBeAdded() {
 	indexesToDelete []int = make([]int)
 	<- ordersThatNeedToBeAddedMutex
 	
@@ -463,6 +468,7 @@ func updateOrdersThatAreHandled() {
 }
 
 // -----------Getting of orders that need to  be added/removed by MEISTER----------------------------------
+
 func getExternalOrdersThatAreHandled(){
 	for{
 		if(network.Master == true){
@@ -474,8 +480,6 @@ func getExternalOrdersThatAreHandled(){
 		}
 	}
 }
-
-
 
 func getExternalOrdersThatNeedToBeAdded(){
 	for{

@@ -8,7 +8,7 @@ To-do
 - When pressing two hall buttons at same floor -> elevator doesnt handle both
 - add copies of internal queue
 - Turn on open-door-lamp
-- Add "go" on all new routines
+
 
 
 --------------------------------------------------------------------------------
@@ -35,3 +35,5 @@ Nettverk sjekker om heis er på.
 Faller den ut sendes det i en channel at nettet har gått til queue. Queue pusher hele extqueue til internal, elevator trenger ikke endre state. Master settes til false
 
 HallLys settes i lys av externalqueue, de andre i lys av hardware
+
+- Add "go" on all new routines
