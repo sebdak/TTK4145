@@ -193,7 +193,7 @@ func addExternalOrdersForThisElevator() {
 		if externalQueues[0][i].ElevatorID == network.Id {
 			if !checkIfNewCabOrder(externalQueues[0][i]) {
 				newOrder = false
-			}else if newOrder == true {
+			}else  {
 				//Check if new external order has not just been handled
 				for j := 0; j < len(ordersThatAreHandled); j++ {
 					if externalQueues[0][i] == ordersThatAreHandled[j] {
@@ -351,6 +351,23 @@ func checkIfNewCabOrder(order constants.Order) bool {
 	return true
 }
 
+func handlePeerDisconnects() {
+	for {
+		peerId := <-peerDisconnectsCh
+
+		if peerId == network.Id {
+			// Push all other elevators orders to its own internal queue
+			takeAllExternalOrders()
+		} else {
+			// If master == true, redist orders
+			if network.Master == true {
+				redistOrders(peerId)
+			}
+		}
+	}
+
+}
+
 func takeAllExternalOrders() {
 	<-externalQueuesMutex
 	for i := 0; i < len(externalQueues[0]); i++ {
@@ -376,31 +393,16 @@ func redistOrders(peerId string) {
 		if order.ElevatorID == peerId {
 
 			order.ElevatorID = ""
-			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 			deleteOrderFromExternalQueue(order)
+			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 		}
 	}
 
 	ordersThatNeedToBeAddedMutex <- true
-	externalQueuesMutex <- true
+	externalQueuesMutex <- true	//MUTEX CONFLICT MUST BE FIXED
 }
 
-func handlePeerDisconnects() {
-	for {
-		peerId := <-peerDisconnectsCh
 
-		if peerId == network.Id {
-			// Push all other elevators orders to its own internal queue
-			takeAllExternalOrders()
-		} else {
-			// If master == true, redist orders
-			if network.Master == true {
-				redistOrders(peerId)
-			}
-		}
-	}
-
-}
 
 // -----------Spamming of orders that need to  be added/removed----------------------------------
 
@@ -487,7 +489,7 @@ func updateOrdersThatAreHandled() {
 
 // -----------Getting of orders that need to  be added/removed by MEISTER----------------------------------
 
-func getExternalOrdersThatAreHandled() {
+func masterGetExternalOrdersThatAreHandled() {
 	for {
 		if network.Master == true {
 			order := <-handledExternalOrderRx
@@ -499,7 +501,7 @@ func getExternalOrdersThatAreHandled() {
 	}
 }
 
-func getExternalOrdersThatNeedToBeAdded() {
+func masterGetExternalOrdersThatNeedToBeAdded() {
 	for {
 		if network.Master == true {
 			order := <-externalOrderRx
@@ -548,11 +550,10 @@ func updateElevatorNextOrder() {
 func chooseElevatorThatTakesOrder(order constants.Order) string {
 	var bestElevatorSoFar string
 	var bestDistSoFar int = 100
-	var dist int
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {
 		currentElevator := headings[network.PeersInfo.Peers[i]]
 		currentElevatorDir := getElevatorDirection(currentElevator.CurrentOrder, currentElevator.LastFloor)
-		dist = findDistToFloor(currentElevator.CurrentOrder, currentElevatorDir, currentElevator.LastFloor)
+		dist := findDistToFloor(currentElevator.CurrentOrder, currentElevatorDir, currentElevator.LastFloor)
 
 		if dist < bestDistSoFar {
 			bestDistSoFar = dist
