@@ -1,22 +1,20 @@
 package network
 
 import (
+	constants "../constants"
 	bcast "./bcast"
 	localip "./localip"
 	peers "./peers"
-	constants "../constants"
 	"flag"
 	"fmt"
 	"os"
 	"time"
-
 )
 
 var Master bool = false
 
 var peerUpdateCh chan peers.PeerUpdate
-var newOrderCh chan constants.Order 
-var newExternalOrderCh chan constants.Order
+var newOrderCh chan constants.Order
 var peerDisconnectsCh chan string
 
 var elevatorHeadingTx chan constants.ElevatorHeading
@@ -28,15 +26,12 @@ var externalOrderRx chan constants.Order
 var handledExternalOrderTx chan constants.Order
 var handledExternalOrderRx chan constants.Order
 
-
-
 var PeersInfo peers.PeerUpdate
 var Id string
 
-func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, peerDisconnectsChannel chan string, elevatorHeadingTxChannel chan constants.ElevatorHeading , elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order){
+func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel chan string, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order) {
 	//Store channels for module communication
 	newOrderCh = newOrderChannel
-	newExternalOrderCh = newExternalOrderChannel
 	peerDisconnectsCh = peerDisconnectsChannel
 
 	//Store channels for module-network communication
@@ -49,25 +44,23 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 	handledExternalOrderTx = handledExternalOrderTxChannel
 	handledExternalOrderRx = handledExternalOrderRxChannel
 
-
-	//Tries to go online 
-	for(!testIfOnline()){
+	//Tries to go online
+	for !testIfOnline() {
 		fmt.Println("Not online, trying to reconnect")
-		time.Sleep(time.Second*3)
+		time.Sleep(time.Second * 3)
 	}
 
 	//start peers broadcast
 	StartUDPPeersBroadcast()
 
 	go masterBroadcast()
-	//Update peers on network 
+	//Update peers on network
 	go lookForChangeInPeers()
 
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
 
 	checkIfMasterIsAlive()
-
 
 	go transceiveElevatorHeading()
 	go transceiveNewExternalOrder()
@@ -77,13 +70,13 @@ func InitNetwork(newOrderChannel chan constants.Order, newExternalOrderChannel c
 }
 
 func transceiveElevatorHeading() {
-	go bcast.Transmitter(constants.NewExternalOrderPort, elevatorHeadingTx)
-	go bcast.Receiver(constants.NewExternalOrderPort, elevatorHeadingRx)
+	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
+	go bcast.Receiver(constants.HeadingPort, elevatorHeadingRx)
 }
 
 func transceiveNewExternalOrder() {
-	go bcast.Transmitter(constants., externalOrderTx)
-	go bcast.Receiver(constants.HeadingPort, externalOrderRx)
+	go bcast.Transmitter(constants.NewExternalOrderPort, externalOrderTx)
+	go bcast.Receiver(constants.NewExternalOrderPort, externalOrderRx)
 }
 
 func transceiveHandledExternalOrder() {
@@ -91,11 +84,10 @@ func transceiveHandledExternalOrder() {
 	go bcast.Receiver(constants.HandledExternalOrderPort, handledExternalOrderRx)
 }
 
-
 func lookForChangeInPeers() {
 	for {
-		PeersInfo = <- peerUpdateCh
-		handleLostElevator()	
+		PeersInfo = <-peerUpdateCh
+		handleLostElevator()
 	}
 }
 
@@ -103,7 +95,6 @@ func transceiveQueues() {
 	go bcast.Transmitter(constants.QueuePort, queuesTx)
 	go bcast.Receiver(constants.QueuePort, queuesRx)
 }
-
 
 func chooseMasterSlave() {
 	smallestID := PeersInfo.Peers[0]
@@ -119,67 +110,61 @@ func chooseMasterSlave() {
 		//start masterBroadcast
 		Master = true
 		fmt.Println("master because of smallestID")
-		
+
 	} else {
 		Master = false
 		fmt.Println("not master because of ID")
 	}
 }
 
-
 func masterBroadcast() {
 	masterTx := make(chan string)
 	go bcast.Transmitter(constants.MasterPort, masterTx)
 	for {
-		if (Master) {
-	 		masterTx <- Id
+		if Master {
+			masterTx <- Id
 		}
-		time.Sleep(time.Millisecond * 50)		
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
-
-func handleLostElevator(){
-	if(len(PeersInfo.Lost) > 0){
-		if(testIfOnline()){
+func handleLostElevator() {
+	if len(PeersInfo.Lost) > 0 {
+		if testIfOnline() {
 			//Elevator is still alive
 			checkIfMasterIsAlive()
 			peerDisconnectsCh <- PeersInfo.Lost[0]
 
-		} else{
+		} else {
 			fmt.Println("Elevator is off network")
 			Master = false
 			//dump external queue to internal
 			peerDisconnectsCh <- PeersInfo.Lost[0]
 		}
 
-		
 	}
 	time.Sleep(time.Millisecond)
 }
 
-
 func testIfOnline() bool {
 	_, err := localip.LocalIP()
-		if err != nil {
-			return false
-		}
+	if err != nil {
+		return false
+	}
 	return true
 }
 
-
 func checkIfMasterIsAlive() {
-	if(Master != true){
-
+	if Master != true {
 
 		masterRx := make(chan string)
 		go bcast.Receiver(constants.MasterPort, masterRx)
 		timer := time.NewTimer(time.Millisecond * 500)
-		
+
 		select {
-		case <- timer.C:
-		chooseMasterSlave()
-		case <- masterRx:
+		case <-timer.C:
+			chooseMasterSlave()
+		case <-masterRx:
 			Master = false
 			fmt.Println("other master on network")
 		}
@@ -187,13 +172,12 @@ func checkIfMasterIsAlive() {
 	}
 }
 
-
-func StartUDPPeersBroadcast(){
+func StartUDPPeersBroadcast() {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
-	
+
 	peerUpdateCh = make(chan peers.PeerUpdate)
-	
+
 	flag.StringVar(&Id, "id", "", "id of this peer")
 	flag.Parse()
 
@@ -211,6 +195,6 @@ func StartUDPPeersBroadcast(){
 
 	peerTxEnable := make(chan bool)
 
-	go peers.Transmitter(constants.PeersPort, Id, peerTxEnableCh)
+	go peers.Transmitter(constants.PeersPort, Id, peerTxEnable)
 	go peers.Receiver(constants.PeersPort, peerUpdateCh)
 }

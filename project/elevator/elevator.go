@@ -4,6 +4,8 @@ import (
 	constants "../constants"
 	driver "../driver"
 	"fmt"
+	"os"
+	"os/exec"
 	"reflect"
 	"time"
 )
@@ -80,7 +82,7 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 }
 
 func setHallLights() {
-	qCopy := make([]constants.Order)
+	var qCopy []constants.Order
 	for {
 		q := <-hallLightCh
 
@@ -115,12 +117,33 @@ func setHallLights() {
 
 func secureFloorIsReached() {
 	//start timer first
-	failedToReachFloorTimer := time.NewTimer(time.Second * 6)
+	failedToReachFloorTimer := time.NewTimer(time.Second * 12)
 
 	//lookForChangeInFloor will return false if the timer times out
 	if !lookForChangeInFloor(failedToReachFloorTimer) {
 		//change state to "Broken". maybe make it more precice later
 		state = constants.Broken
+	}
+}
+
+func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
+
+	for {
+		currentFloorSignal := driver.GetFloorSensor()
+		if currentFloorSignal != -1 && LastFloor != currentFloorSignal {
+			LastFloor = currentFloorSignal
+			driver.SetFloorIndicator(LastFloor)
+
+			failedToReachFloorTimer.Stop()
+			return true
+		}
+
+		select {
+		case <-failedToReachFloorTimer.C:
+			return false
+		default:
+			//prevent timer from blocking
+		}
 	}
 }
 
@@ -178,28 +201,6 @@ func setDirection() {
 	}
 }
 
-func lookForChangeInFloor(failedToReachFloorTimer time.Timer) bool {
-	var currentFloorSignal = driver.GetFloorSensor()
-
-	for {
-
-		if currentFloorSignal != -1 && LastFloor != currentFloorSignal {
-			LastFloor = currentFloorSignal
-			driver.SetFloorIndicator(LastFloor)
-
-			failedToReachFloorTimer.Stop()
-			return true
-		}
-
-		select {
-		case <-failedToReachFloorTimer.C:
-			return false
-		default:
-			//prevent timer from blocking
-		}
-	}
-}
-
 func lookForButtonPress() {
 	var newOrder constants.Order
 
@@ -236,11 +237,8 @@ func lookForButtonPress() {
 }
 
 func shutdownRoutine() {
-	//go off network
-	peerTxEnableCh <- false
-
 	//spawn new process
-	_, _ := exec.Command("gnome-terminal", "-x", "go", "run", "main.go").Output()
+	exec.Command("gnome-terminal", "-x", "go", "run", "main.go").Output()
 
 	//kill this process
 	proc, _ := os.FindProcess(os.Getpid())

@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	newOrderChannel := make(chan constants.Order)
 	newExternalOrderChannel := make(chan constants.Order)
 	nextFloorChannel := make(chan constants.Order)
@@ -30,8 +29,8 @@ func main() {
 		nextFloorChannel,
 		handledOrderChannel,
 		hallLightChannel)
+
 	network.InitNetwork(newOrderChannel,
-		newExternalOrderChannel,
 		peerDisconnectsChannel,
 		elevatorHeadingTxChannel,
 		elevatorHeadingRxChannel,
@@ -41,7 +40,9 @@ func main() {
 		externalOrderRx,
 		handledExternalOrderTx,
 		handledExternalOrderRx)
+
 	queue.InitQueue(newOrderChannel,
+		newExternalOrderChannel,
 		nextFloorChannel,
 		handledOrderChannel,
 		peerDisconnectsChannel,
