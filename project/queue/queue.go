@@ -209,10 +209,10 @@ func addExternalOrdersForThisElevator() {
 		if newOrder == true {
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, externalQueues[0][i])
-			internalQueueMutex <- true
 			fmt.Println("Added new order: ", externalQueues[0][i])
 			updateElevatorNextOrder()
 			fmt.Println("Next order is: ", elevator.CurrentOrder)
+			internalQueueMutex <- true
 		}
 
 	}
@@ -225,8 +225,8 @@ func handleNewCabOrder() {
 		if checkIfNewCabOrder(order) {
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, order)
-			internalQueueMutex <- true
 			updateElevatorNextOrder()
+			internalQueueMutex <- true
 		}
 
 		time.Sleep(time.Millisecond)
@@ -276,7 +276,10 @@ func handleCompletedCabOrder() {
 			ordersThatAreHandledMutex <- true
 		}
 		deleteOrderFromInternalQueue(order)
+
+		<-internalQueueMutex
 		updateElevatorNextOrder()
+		internalQueueMutex <- true
 	}
 }
 
@@ -405,31 +408,31 @@ func handlePeerDisconnects() {
 
 func spamExternalOrdersThatAreHandled() {
 	for {
-		<-ordersThatAreHandledMutex
 
 		if len(ordersThatAreHandled) > 0 {
+			<-ordersThatAreHandledMutex
 			for i := 0; i < len(ordersThatAreHandled); i++ {
 				handledExternalOrderTx <- ordersThatAreHandled[i]
 				time.Sleep(time.Millisecond)
 			}
+			ordersThatAreHandledMutex <- true
 		}
 
-		ordersThatAreHandledMutex <- true
 		time.Sleep(time.Millisecond * 50)
 	}
 }
 
 func spamExternalOrdersThatNeedToBeAdded() {
 	for {
-		<-ordersThatNeedToBeAddedMutex
 
 		if len(ordersThatNeedToBeAdded) > 0 {
+			<-ordersThatNeedToBeAddedMutex
 			for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 				externalOrderTx <- ordersThatNeedToBeAdded[i]
 			}
+			ordersThatNeedToBeAddedMutex <- true
 		}
 
-		ordersThatNeedToBeAddedMutex <- true
 		time.Sleep(time.Millisecond * 50)
 	}
 }
@@ -538,6 +541,7 @@ func updateElevatorNextOrder() {
 
 		}
 		fmt.Println("best order: ", bestFloorSoFar)
+		fmt.Println("extqueue: ", externalQueues[0])
 		nextFloorCh <- bestFloorSoFar
 	}
 
@@ -547,7 +551,6 @@ func chooseElevatorThatTakesOrder(order constants.Order) string {
 	var bestElevatorSoFar string
 	var bestDistSoFar int = 100
 	var dist int
-
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {
 		currentElevator := headings[network.PeersInfo.Peers[i]]
 		currentElevatorDir := getElevatorDirection(currentElevator.CurrentOrder, currentElevator.LastFloor)

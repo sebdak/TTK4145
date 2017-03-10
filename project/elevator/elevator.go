@@ -11,6 +11,7 @@ import (
 )
 
 var LastFloor int
+var lastOrder constants.Order
 var CurrentOrder constants.Order
 var Direction constants.ElevatorDirection = constants.DirStop
 var state constants.ElevatorState
@@ -30,7 +31,7 @@ func Run() {
 			break
 
 		case constants.AtFloor:
-			if LastFloor != CurrentOrder.Floor {
+			if CurrentOrder != lastOrder {
 				goToOrderedFloor()
 				state = constants.Moving
 			}
@@ -135,7 +136,7 @@ func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 
 	for {
 		currentFloorSignal := driver.GetFloorSensor()
-		if currentFloorSignal != -1 && LastFloor != currentFloorSignal {
+		if currentFloorSignal != -1 {
 			LastFloor = currentFloorSignal
 			driver.SetFloorIndicator(LastFloor)
 
@@ -149,6 +150,7 @@ func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 		default:
 			//prevent timer from blocking
 		}
+		time.Sleep(time.Millisecond * 10)
 	}
 }
 
@@ -157,8 +159,8 @@ func orderedFloorReachedRoutine() {
 	setCabLights()
 	setDirection()
 
+	lastOrder = CurrentOrder
 	//Tell queue order has been handled
-	fmt.Println("orderedFloorReachedRoutine sender håndtert ordre", CurrentOrder)
 	handledOrderCh <- CurrentOrder
 
 	//Start floortimer and open doors
@@ -193,7 +195,11 @@ func lookForNewQueueOrder() {
 
 func goToOrderedFloor() {
 	//start timer
-	setDirection()
+	if CurrentOrder.Floor == lastOrder.Floor {
+		Direction = constants.DirStop
+	} else {
+		setDirection()
+	}
 	driver.SetMotorDir(Direction)
 }
 
@@ -220,17 +226,13 @@ func lookForButtonPress() {
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirStop
 				newOrderCh <- newOrder
-			}
-
-			if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
+			} else if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
 				//driver.SetButtonLamp(constants.ButtonCallUp, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirUp
 				newExternalOrderCh <- newOrder
 
-			}
-
-			if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
+			} else if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
 				//driver.SetButtonLamp(constants.ButtonCallDown, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirDown
@@ -240,7 +242,7 @@ func lookForButtonPress() {
 
 		}
 
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
