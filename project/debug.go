@@ -7,10 +7,15 @@ import (
 
 func main() {
 
-	var channel chan string = make(chan string)
 	str := "yo"
+ 	messages := make(chan string, 1)
+    
 
-	channel <- str
 
-	fmt.Println(str)
+    messages <- str
+
+    fmt.Println(str)
+
+
 }
+

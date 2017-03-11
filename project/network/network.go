@@ -27,14 +27,14 @@ var handledExternalOrderTx chan constants.Order
 var handledExternalOrderRx chan constants.Order
 
 var PeersInfo peers.PeerUpdate
-var Id string
+var Id string = ""
 
 func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel chan string, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order) {
-	//Store channels for module communication
+	//Store channels for module->module communication
 	newOrderCh = newOrderChannel
 	peerDisconnectsCh = peerDisconnectsChannel
 
-	//Store channels for module-network communication
+	//Store channels for module->network->module communication
 	elevatorHeadingTx = elevatorHeadingTxChannel
 	elevatorHeadingRx = elevatorHeadingRxChannel
 	queuesTx = queuesTxChannel
@@ -87,7 +87,9 @@ func transceiveHandledExternalOrder() {
 func lookForChangeInPeers() {
 	for {
 		PeersInfo = <-peerUpdateCh
-		handleLostElevator()
+		if(len(PeersInfo.Lost) > 0){
+			handleLostElevator()
+		}
 	}
 }
 
@@ -121,7 +123,7 @@ func masterBroadcast() {
 	masterTx := make(chan string)
 	go bcast.Transmitter(constants.MasterPort, masterTx)
 	for {
-		if Master {
+		if Master == true {
 			masterTx <- Id
 		}
 		time.Sleep(time.Millisecond * 50)
@@ -129,29 +131,33 @@ func masterBroadcast() {
 }
 
 func handleLostElevator() {
-	if len(PeersInfo.Lost) > 0 {
-		if testIfOnline() {
-			//Elevator is still alive
-			checkIfMasterIsAlive()
-			peerDisconnectsCh <- PeersInfo.Lost[0]
 
-		} else {
-			fmt.Println("Elevator is off network")
-			Master = false
-			//dump external queue to internal
-			peerDisconnectsCh <- PeersInfo.Lost[0]
+	if testIfOnline() {
+		//Check if master lives - if not decide new master
+		checkIfMasterIsAlive()
+
+		//Tell queue which elevators disconnected
+		for i:= 0; i < len(PeersInfo.Lost); i++{
+			peerDisconnectsCh <- PeersInfo.Lost[i]
 		}
 
+	} else {
+		Master = false
+		//Tell queue this elevator is offline
+		peerDisconnectsCh <- Id
 	}
-	time.Sleep(time.Millisecond)
+
 }
 
 func testIfOnline() bool {
-	ip, err := localip.LocalIP()
+	localIP, err := localip.LocalIP()
 	if err != nil {
 		return false
+	} else if Id == "" {
+		//Set network ID if online
+		Id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
-	fmt.Println("MY IP IS: ", ip)
+
 	return true
 }
 
@@ -160,10 +166,10 @@ func checkIfMasterIsAlive() {
 
 		masterRx := make(chan string)
 		go bcast.Receiver(constants.MasterPort, masterRx)
-		timer := time.NewTimer(time.Millisecond * 500)
+		noMasterTimer := time.NewTimer(time.Millisecond * 500)
 
 		select {
-		case <-timer.C:
+		case <-noMasterTimer.C:
 			chooseMasterSlave()
 		case <-masterRx:
 			Master = false
@@ -174,26 +180,8 @@ func checkIfMasterIsAlive() {
 }
 
 func StartUDPPeersBroadcast() {
-	// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
 
 	peerUpdateCh = make(chan peers.PeerUpdate)
-
-	flag.StringVar(&Id, "id", "", "id of this peer")
-	flag.Parse()
-
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
-	if Id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		Id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
-
 	peerTxEnable := make(chan bool)
 
 	go peers.Transmitter(constants.PeersPort, Id, peerTxEnable)
