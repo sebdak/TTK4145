@@ -1,13 +1,7 @@
-
-
-
-
 --------
 To-do
 - Fix elevator init when at floor 0
-- When pressing two hall buttons at same floor -> elevator doesnt handle both
 - add copies of internal queue
-- Turn on open-door-lamp
 
 
 
@@ -37,3 +31,9 @@ Faller den ut sendes det i en channel at nettet har gått til queue. Queue pushe
 HallLys settes i lys av externalqueue, de andre i lys av hardware
 
 - Add "go" on all new routines
+- Legg til flere ifs for at elev skal stoppe i etasje
+- Fix internalqueue delete orders
+- fix setDirection og updatedirection
+- fix lysene
+- When pressing two hall buttons at same floor -> elevator doesnt handle both
+- Turn on open-door-lamp

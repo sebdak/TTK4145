@@ -56,8 +56,6 @@ func main() {
 		handledExternalOrderTx,
 		handledExternalOrderRx)
 
-	go elevator.Run()
-
-	runForever := make(chan bool)
-	<-runForever
+	hopefullyRunSucessfullyForever := make(chan bool)
+	<-hopefullyRunSucessfullyForever
 }

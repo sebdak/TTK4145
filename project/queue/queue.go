@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
+
 var internalQueue []constants.Order
 var externalQueues [][]constants.Order
 var ordersThatNeedToBeAdded []constants.Order
@@ -19,12 +21,12 @@ var externalQueuesMutex chan bool = make(chan bool, 1)
 var ordersThatNeedToBeAddedMutex chan bool = make(chan bool, 1)
 var ordersThatAreHandledMutex chan bool = make(chan bool, 1)
 
+var hallLightCh chan []constants.Order
 var newOrderCh chan constants.Order
 var nextFloorCh chan constants.Order
 var handledOrderCh chan constants.Order
 var newExternalOrderCh chan constants.Order
 var peerDisconnectsCh chan string
-var hallLightCh chan []constants.Order
 
 var elevatorHeadingTx chan constants.ElevatorHeading
 var elevatorHeadingRx chan constants.ElevatorHeading
@@ -35,11 +37,9 @@ var externalOrderRx chan constants.Order
 var handledExternalOrderTx chan constants.Order
 var handledExternalOrderRx chan constants.Order
 
-var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
 
 func InitQueue(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, peerDisconnectsChannel chan string, hallLightChannel chan []constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order) {
 	//Add channels for modulecommunication
-	fmt.Println("Started queue")
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
 	handledOrderCh = handledOrderChannel
