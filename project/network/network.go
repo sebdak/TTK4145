@@ -28,6 +28,7 @@ var handledExternalOrderRx chan constants.Order
 
 var PeersInfo peers.PeerUpdate
 var Id string = ""
+var Online bool = false
 
 func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel chan string, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order) {
 	//Store channels for module->module communication
@@ -152,12 +153,14 @@ func handleLostElevator() {
 func testIfOnline() bool {
 	localIP, err := localip.LocalIP()
 	if err != nil {
+		Online = false
 		return false
 	} else if Id == "" {
 		//Set network ID if online
 		Id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
 
+	Online = true
 	return true
 }
 

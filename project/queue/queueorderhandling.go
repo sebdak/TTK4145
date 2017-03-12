@@ -31,7 +31,7 @@ func handleExternalButtonOrder() {
 	for {
 
 		order := <-newExternalOrderCh
-		if checkIfNewExternalOrder(order) && !isOrderInNeedToBeAddedList(order) {
+		if checkIfNewExternalOrder(order) && !isOrderInNeedToBeAddedList(order) && network.Online == true {
 			<-ordersThatNeedToBeAddedMutex
 			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 			ordersThatNeedToBeAddedMutex <- true
@@ -62,8 +62,8 @@ func handleCompletedCabOrder() {
 	for {
 
 		order := <-handledOrderCh
-		//Check if order was external and that it is not already in handledOrderslist
-		if order.Direction != constants.DirStop && !isOrderInHandledOrdersList(order) {
+		//Check if order was external and that it is not already in handledOrderslist. If elev is off network there's no need telling others order has been handled
+		if order.Direction != constants.DirStop && !isOrderInHandledOrdersList(order) && network.Online == true {
 			<-ordersThatAreHandledMutex
 			ordersThatAreHandled = append(ordersThatAreHandled, order)
 			ordersThatAreHandledMutex <- true
@@ -253,7 +253,7 @@ func updateElevatorNextOrder() {
 
 }
 
-func chooseElevatorThatTakesOrder(order constants.Order) string {
+func masterChooseElevatorThatTakesOrder(order constants.Order) string {
 	var bestElevatorSoFar string
 	var bestDistSoFar int = 100
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {

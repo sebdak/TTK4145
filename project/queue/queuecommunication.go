@@ -167,7 +167,7 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 			order := <-externalOrderRx
 			//Check because master can have already handled order while slave still is spamming
 			if checkIfNewExternalOrder(order) == true {
-				order.ElevatorID = chooseElevatorThatTakesOrder(order)
+				order.ElevatorID = masterChooseElevatorThatTakesOrder(order)
 				<-externalQueuesMutex
 				for i := 0; i < constants.QueueCopies; i++ {
 					externalQueues[i] = append(externalQueues[i], order)
