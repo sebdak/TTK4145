@@ -120,7 +120,7 @@ func spamExternalOrdersThatNeedToBeAdded() {
 			ordersThatNeedToBeAddedMutex <- true
 		}
 
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 100)
 	}
 }
 
@@ -179,7 +179,7 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 				externalQueuesMutex <- true
 			}
 		}
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(time.Millisecond * 100)
 	}
 
 }

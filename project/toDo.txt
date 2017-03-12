@@ -1,7 +1,14 @@
 --------
 To-do
-- Fix elevator init when at floor 0
-- add copies of internal queue
+- Gå gjennom hele new external order prosessen og se hvor bugs kan oppstå
+- Vurdere peersinfomutex
+- Vurdere headingsmutex
+- Gå gjennom sending og mottakelse av headings
+- Bug i getElevatorDirection: hva hvis order.floor < lastfloor og heisen er på vei opp?
+	- Kanskje sende med elevator.Direction i heading?
+	- Utvide finddistance til å takle dirstop-retningen
+- Heis tar ikke høyde for at direction kan være "DirStop". Det fører til at en heis som er i andre kan ha dirup, en heis i tredje dirdown, så blir ordre 1 etasje tatt av den i 3. pga. systemet tror retningen til nærmeste heis er dirup.
+	- Kan løses ved å innføre "DirStop" når internkøen er tom (sende tom ordre fra queuemodulen når det ikke er flere ordre)
 
 
 
@@ -37,3 +44,4 @@ HallLys settes i lys av externalqueue, de andre i lys av hardware
 - fix lysene
 - When pressing two hall buttons at same floor -> elevator doesnt handle both
 - Turn on open-door-lamp
+- Fix elevator init when at floor 0
