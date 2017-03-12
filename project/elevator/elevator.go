@@ -128,8 +128,13 @@ func testElevator() bool {
 
 func lookForNewQueueOrder() {
 	for {
-		CurrentOrder = <-nextFloorCh
-		fmt.Println("New elevator order: ", CurrentOrder.Floor, CurrentOrder.Direction, Direction)
+		order := <-nextFloorCh
+		if order.Floor == -1{
+			Direction = constants.DirStop //Internalqueue has no new orders
+		} else {
+			CurrentOrder = order
+			fmt.Println("New elevator order: ", CurrentOrder.Floor, CurrentOrder.Direction, Direction)
+		}
 		time.Sleep(time.Millisecond * 5)
 	}
 }

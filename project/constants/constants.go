@@ -45,5 +45,6 @@ type Order struct {
 type ElevatorHeading struct {
 	LastFloor    int
 	CurrentOrder Order
+	Direction ElevatorDirection
 	Id           string
 }

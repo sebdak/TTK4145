@@ -169,20 +169,15 @@ func deleteOrderFromExternalQueue(order constants.Order) {
 
 func addExternalOrdersForThisElevator() {
 	for i := 0; i < len(externalQueues[0]); i++ {
-		//Check if new external order is not in internalqueue
+		//Assuming order is new
 		newOrder := true
-		if externalQueues[0][i].ElevatorID == network.Id {
-			if !checkIfNewInternalOrder(externalQueues[0][i]) {
+		if externalQueues[0][i].ElevatorID == network.Id { 
+			if !checkIfNewInternalOrder(externalQueues[0][i]) { //Check if order already is in internalqueue
 				newOrder = false
-			}else  {
-				//Check if new external order has not just been handled
-				for j := 0; j < len(ordersThatAreHandled); j++ {
-					if externalQueues[0][i] == ordersThatAreHandled[j] {
-						newOrder = false
-						break
-					}
-				}
-				
+
+			}else if isOrderInHandledOrdersList(externalQueues[0][i]) { //Check if new external order has not just been handled
+				newOrder = false
+				break
 			}
 
 			if newOrder == true {
@@ -270,6 +265,8 @@ func updateElevatorNextOrder() {
 		fmt.Println("best order: ", bestFloorSoFar)
 		fmt.Println("extqueue: ", externalQueues[0])
 		nextFloorCh <- bestFloorSoFar
+	} else {
+		nextFloorCh <- constants.Order{Floor: -1, Direction: constants.DirStop, ElevatorID: "-1"} //Send empty order, telling elevator there are no new orders
 	}
 
 }
@@ -279,9 +276,7 @@ func chooseElevatorThatTakesOrder(order constants.Order) string {
 	var bestDistSoFar int = 100
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {
 		currentElevator := headings[network.PeersInfo.Peers[i]]
-		currentElevatorDir := getElevatorDirection(currentElevator.CurrentOrder, currentElevator.LastFloor)
-		dist := findDistToFloor(currentElevator.CurrentOrder, currentElevatorDir, currentElevator.LastFloor)
-
+		dist := findDistToFloor(currentElevator.CurrentOrder, currentElevator.Direction, currentElevator.LastFloor)
 		if dist < bestDistSoFar {
 			bestDistSoFar = dist
 			bestElevatorSoFar = currentElevator.Id
@@ -289,16 +284,6 @@ func chooseElevatorThatTakesOrder(order constants.Order) string {
 	}
 
 	return bestElevatorSoFar
-}
-
-func getElevatorDirection(order constants.Order, elevatorLastFloor int) constants.ElevatorDirection {
-	var direction constants.ElevatorDirection = constants.DirStop
-	if order.Floor > elevatorLastFloor {
-		direction = constants.DirUp
-	} else {
-		direction = constants.DirDown
-	}
-	return direction
 }
 
 func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.ElevatorDirection, currentFloor int) int {
@@ -324,6 +309,12 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 			dist = currentFloor + destinationOrder.Floor
 		} else if destinationOrder.Floor >= currentFloor && (destinationOrder.Direction == constants.DirDown) {
 			dist = currentFloor + (constants.NumberOfFloors - 1) + (constants.NumberOfFloors - destinationOrder.Floor)
+		}
+	} else if elevatorDir == constants.DirStop{
+		if destinationOrder.Floor >= currentFloor{
+			dist = destinationOrder.Floor - currentFloor
+		} else if destinationOrder.Floor < currentFloor{
+			dist = currentFloor - destinationOrder.Floor
 		}
 	}
 

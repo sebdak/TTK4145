@@ -94,6 +94,7 @@ func initQueues() {
 
 func compareAndFixExternalQueues() {
 	count := 0
+	totalCount := 0
 	var correctQueueIndex int
 	var majority int = constants.QueueCopies/2 + 1
 
@@ -104,16 +105,16 @@ func compareAndFixExternalQueues() {
 			}
 		}
 
-		// if all queuea are alike
+		// If current queue is equal more than 50% of the queue copies
 		if count >= majority {
 			correctQueueIndex = i
 		}
-
+		totalCount += count
 		count = 0
 	}
 
-	//if queues dont match
-	if count < constants.QueueCopies {
+	//if there was a mismatch
+	if totalCount < constants.QueueCopies*constants.QueueCopies {
 		for i := 0; i < constants.QueueCopies; i++ {
 			if i != correctQueueIndex {
 				externalQueues[i] = externalQueues[correctQueueIndex]

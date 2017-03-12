@@ -4,11 +4,11 @@ To-do
 - Vurdere peersinfomutex
 - Vurdere headingsmutex
 - Gå gjennom sending og mottakelse av headings
-- Bug i getElevatorDirection: hva hvis order.floor < lastfloor og heisen er på vei opp?
-	- Kanskje sende med elevator.Direction i heading?
+- Utvide getelevatordirection til å takle tilfellet der order.Floor==elevator.lastFloor
 	- Utvide finddistance til å takle dirstop-retningen
 - Heis tar ikke høyde for at direction kan være "DirStop". Det fører til at en heis som er i andre kan ha dirup, en heis i tredje dirdown, så blir ordre 1 etasje tatt av den i 3. pga. systemet tror retningen til nærmeste heis er dirup.
 	- Kan løses ved å innføre "DirStop" når internkøen er tom (sende tom ordre fra queuemodulen når det ikke er flere ordre)
+- Alle gets trenger ikke sleep
 
 
 
@@ -45,3 +45,13 @@ HallLys settes i lys av externalqueue, de andre i lys av hardware
 - When pressing two hall buttons at same floor -> elevator doesnt handle both
 - Turn on open-door-lamp
 - Fix elevator init when at floor 0
+- Fix compare and fix externalqueue logic
+
+--------------------------------------------------------------------------------
+Endre headingsavsending
+- Endre at headings sender direction i tillegg
+- Endre elevdirection i constants
+- Endre at kø gir ut tom ordre når det skal stoppes
+	- Hvordan går dette i hop med logikken som styrer at heisen ikke skal bevege seg
+- Endre når elevator setter direction til dirstop (må skje når den vet at internkøen er tom)
+- Endre updatenextorderlogikk til å ta hensyn for dette

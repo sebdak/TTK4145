@@ -39,7 +39,7 @@ func getExternalQueuesAndUpdate() {
 		hallLightCh <- externalQueues[0]
 		externalQueuesMutex <- true
 
-		time.Sleep(time.Millisecond *10)
+		time.Sleep(time.Millisecond *50)
 	}
 }
 
@@ -81,8 +81,6 @@ func updateOrdersThatAreHandled() {
 		if safeToDelete == true {
 			indexesToDelete = append(indexesToDelete, i)
 		}
-
-		safeToDelete = true
 	}
 
 	for i := 0; i < len(indexesToDelete); i++ {
@@ -129,6 +127,7 @@ func sendElevatorHeading() {
 		heading := constants.ElevatorHeading{
 			LastFloor:    elevator.LastFloor,
 			CurrentOrder: elevator.CurrentOrder,
+			Direction:    elevator.Direction
 			Id:           network.Id,
 		}
 
@@ -138,7 +137,7 @@ func sendElevatorHeading() {
 
 		}
 
-		time.Sleep(time.Millisecond * 20)
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
