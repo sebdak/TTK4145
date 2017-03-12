@@ -38,8 +38,6 @@ func getExternalQueuesAndUpdate() {
 		//Update lights in elevator
 		hallLightCh <- externalQueues[0]
 		externalQueuesMutex <- true
-
-		time.Sleep(time.Millisecond *50)
 	}
 }
 
@@ -178,7 +176,6 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 				externalQueuesMutex <- true
 			}
 		}
-		time.Sleep(time.Millisecond * 100)
 	}
 
 }

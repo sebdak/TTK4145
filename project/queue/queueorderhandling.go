@@ -21,8 +21,6 @@ func handleNewCabOrder() {
 			updateElevatorNextOrder()
 			internalQueueMutex <- true
 		}
-
-		time.Sleep(time.Millisecond)
 	}
 }
 
@@ -150,19 +148,15 @@ func deleteOrderFromInternalQueue(order constants.Order) {
 	}
 }
 
-
 func deleteOrderFromExternalQueue(order constants.Order) {
 	//Assume that externalqueuesmutex is taken in function that calls this
-	for i := 0; i < len(externalQueues[0]); i++ {
-		if externalQueues[0][i].Floor == order.Floor && externalQueues[0][i].Direction == order.Direction {
-			externalQueues[0] = append(externalQueues[j][:i], externalQueues[j][(i+1):]...)
-			break
+	for i:= 0; i < constants.QueueCopies; i++{
+		for j := 0; j < len(externalQueues[0]); j++ {
+			if externalQueues[i][j].Floor == order.Floor && externalQueues[i][j].Direction == order.Direction {
+				externalQueues[i] = append(externalQueues[i][:j], externalQueues[i][(j+1):]...)
+				break
+			}
 		}
-	}
-
-	//Update all other copies
-	for i := 1; i < constants.QueueCopies; i++ {
-		externalQueues[i] = externalQueues[0]
 	}
 
 }

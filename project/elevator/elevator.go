@@ -135,7 +135,6 @@ func lookForNewQueueOrder() {
 			CurrentOrder = order
 			fmt.Println("New elevator order: ", CurrentOrder.Floor, CurrentOrder.Direction, Direction)
 		}
-		time.Sleep(time.Millisecond * 5)
 	}
 }
 

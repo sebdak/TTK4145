@@ -1,15 +1,7 @@
 --------
 To-do
-- Gå gjennom hele new external order prosessen og se hvor bugs kan oppstå
 - Vurdere peersinfomutex
 - Vurdere headingsmutex
-- Gå gjennom sending og mottakelse av headings
-- Utvide getelevatordirection til å takle tilfellet der order.Floor==elevator.lastFloor
-	- Utvide finddistance til å takle dirstop-retningen
-- Heis tar ikke høyde for at direction kan være "DirStop". Det fører til at en heis som er i andre kan ha dirup, en heis i tredje dirdown, så blir ordre 1 etasje tatt av den i 3. pga. systemet tror retningen til nærmeste heis er dirup.
-	- Kan løses ved å innføre "DirStop" når internkøen er tom (sende tom ordre fra queuemodulen når det ikke er flere ordre)
-- Alle gets trenger ikke sleep
-
 
 
 --------------------------------------------------------------------------------
@@ -46,6 +38,9 @@ HallLys settes i lys av externalqueue, de andre i lys av hardware
 - Turn on open-door-lamp
 - Fix elevator init when at floor 0
 - Fix compare and fix externalqueue logic
+- Alle gets trenger ikke sleep
+- Gå gjennom hele new external order prosessen og se hvor bugs kan oppstå
+- Ny ordre burde slettes individuelt fra køkopiene
 
 --------------------------------------------------------------------------------
 Endre headingsavsending
@@ -55,3 +50,8 @@ Endre headingsavsending
 	- Hvordan går dette i hop med logikken som styrer at heisen ikke skal bevege seg
 - Endre når elevator setter direction til dirstop (må skje når den vet at internkøen er tom)
 - Endre updatenextorderlogikk til å ta hensyn for dette
+- Gå gjennom sending og mottakelse av headings
+- Utvide getelevatordirection til å takle tilfellet der order.Floor==elevator.lastFloor
+	- Utvide finddistance til å takle dirstop-retningen
+- Heis tar ikke høyde for at direction kan være "DirStop". Det fører til at en heis som er i andre kan ha dirup, en heis i tredje dirdown, så blir ordre 1 etasje tatt av den i 3. pga. systemet tror retningen til nærmeste heis er dirup.
+	- Kan løses ved å innføre "DirStop" når internkøen er tom (sende tom ordre fra queuemodulen når det ikke er flere ordre)
