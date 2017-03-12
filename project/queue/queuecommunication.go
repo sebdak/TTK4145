@@ -147,7 +147,6 @@ func getElevatorHeadings() {
 	}
 }
 
-
 func masterGetExternalOrdersThatAreHandled() {
 	for {
 		if network.Master == true {
@@ -178,4 +177,17 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 		}
 	}
 
+}
+
+func handlePeerDisconnects() {
+	for {
+		elevatorId := <-peerDisconnectsCh
+
+		if elevatorId == network.Id {
+			// Push all other elevators orders to its own internal queue
+			disconnectedTakeAllExternalOrders()
+		} else {
+			masterRedistOrders(elevatorId)
+		}
+	}
 }
