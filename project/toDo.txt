@@ -1,7 +1,10 @@
 --------
 To-do
 - Vurdere peersinfomutex
+	-  Finnes det funksjoner på hardwarenivå som hindrer kræsj når det leses og skrives samtidig?
 - Vurdere headingsmutex
+	- Når man skriver/leser entry i map, finnes det funksjoner på hardwarenivå som hindrer kræsj når dette skjer samtidig?
+- Vurdere tre kopier av internalqueue
 
 
 --------------------------------------------------------------------------------
