@@ -257,7 +257,7 @@ func masterChooseElevatorThatTakesOrder(order constants.Order) string {
 		currentElevator := headings[network.PeersInfo.Peers[i]]
 		fmt.Println("Evaluating elevator for order:", currentElevator)
 		fmt.Println("Evaluating elevator for order:", order)
-		dist := findDistToFloor(order, currentElevator.Direction, currentElevator.LastFloor)
+		dist := findDistToFloor(order, currentElevator.Direction, currentElevator.LastFloor, currentElevator.CurrentOrder)
 		fmt.Println("Dist calculated:", dist)
 		if dist < bestDistSoFar {
 			bestDistSoFar = dist
@@ -268,7 +268,7 @@ func masterChooseElevatorThatTakesOrder(order constants.Order) string {
 	return bestElevatorSoFar
 }
 
-func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.ElevatorDirection, currentFloor int) int {
+func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.ElevatorDirection, currentFloor int, currentOrder constants.Order) int {
 	dist := 100
 
 	if elevatorDir == constants.DirUp {
@@ -282,6 +282,12 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 		} else if destinationOrder.Floor <= currentFloor && (destinationOrder.Direction == constants.DirUp) {
 			dist = (constants.NumberOfFloors - 1) - currentFloor + (constants.NumberOfFloors - 1) + destinationOrder.Floor
 		}
+
+		//Add 2 to dist because elevator needs to stop before handling this order
+		if(destinationOrder.Floor > currentOrder){
+			dist += 1
+		}
+
 	} else if elevatorDir == constants.DirDown {
 		if destinationOrder.Floor < currentFloor && (destinationOrder.Direction == constants.DirDown || destinationOrder.Direction == constants.DirStop) {
 			dist = currentFloor - destinationOrder.Floor
@@ -292,6 +298,12 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 		} else if destinationOrder.Floor >= currentFloor && (destinationOrder.Direction == constants.DirDown) {
 			dist = currentFloor + (constants.NumberOfFloors - 1) + (constants.NumberOfFloors - destinationOrder.Floor)
 		}
+
+		//Add 2 to dist because elevator needs to stop before handling this order
+		if(destinationOrder.Floor < currentOrder){
+			dist += 1
+		}
+
 	} else if elevatorDir == constants.DirStop{
 		if destinationOrder.Floor >= currentFloor{
 			dist = destinationOrder.Floor - currentFloor
