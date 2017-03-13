@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"reflect"
 )
 
 var Master bool = false
@@ -86,7 +87,13 @@ func transceiveHandledExternalOrder() {
 
 func lookForChangeInPeers() {
 	for {
-		PeersInfo = <-peerUpdateCh
+		ps := <-peerUpdateCh
+
+		if(!reflect.DeepEqual(ps, PeersInfo)){
+			fmt.Println("Peersupdate: ", ps)
+			PeersInfo = ps
+		}
+
 		if(len(PeersInfo.Lost) > 0){
 			handleLostElevator()
 		}
