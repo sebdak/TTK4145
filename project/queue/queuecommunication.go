@@ -143,7 +143,6 @@ func getElevatorHeadings() {
 	var heading constants.ElevatorHeading
 	for {
 		heading = <-elevatorHeadingRx
-		fmt.Println("New heading: ", heading)
 		headings[heading.Id] = heading
 	}
 }

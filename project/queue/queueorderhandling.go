@@ -256,6 +256,7 @@ func masterChooseElevatorThatTakesOrder(order constants.Order) string {
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {
 		currentElevator := headings[network.PeersInfo.Peers[i]]
 		fmt.Println("Evaluating elevator for order:", currentElevator)
+		fmt.Println("Evaluating elevator for order:", order)
 		dist := findDistToFloor(order, currentElevator.Direction, currentElevator.LastFloor)
 		fmt.Println("Dist calculated:", dist)
 		if dist < bestDistSoFar {
