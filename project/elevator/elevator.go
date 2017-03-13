@@ -44,11 +44,10 @@ func run() {
 		switch state {
 		case constants.Initializing:
 			if(testElevator() == true){
-				state = constants.AtFloor
-				Direction = constants.DirStop
 				go lookForOrderButtonPress()
 				go lookForNewQueueOrder()
 				go setHallLights()
+				state = constants.AtFloor
 			} else {
 				state = constants.Broken
 			}
@@ -121,7 +120,8 @@ func testElevator() bool {
 		}
 	}
 
-	driver.SetMotorDir(constants.DirStop)
+	Direction = constants.DirStop
+	driver.SetMotorDir(Direction)
 	lastOrder = CurrentOrder
 	LastFloor = 0
 	return true
