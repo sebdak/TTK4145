@@ -166,7 +166,7 @@ func testIfOnline() bool {
 		//Set network ID if online
 		Id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	}
-	fmt.Println("Offline", Id)
+	fmt.Println("Online", Id)
 	Online = true
 	return true
 }
