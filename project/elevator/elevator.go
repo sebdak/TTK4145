@@ -46,7 +46,7 @@ func run() {
 			if(testElevator() == true){
 				go lookForOrderButtonPress()
 				go lookForNewQueueOrder()
-				go setHallLights()
+				go updateHallLights()
 				state = constants.AtFloor
 			} else {
 				state = constants.Broken
@@ -65,7 +65,7 @@ func run() {
 
 			secureElevatorIsMoving()
 
-			if LastFloor == CurrentOrder.Floor && (CurrentOrder.Direction == elevator.Direction ||CurrentOrder.Direction == DirStop) { 
+			if LastFloor == CurrentOrder.Floor && (CurrentOrder.Direction == Direction ||CurrentOrder.Direction == constants.DirStop) { 
 
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
@@ -89,34 +89,47 @@ func testElevator() bool {
 		//Send elevator to 1 floor and check that it's reached
 		CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: "-1"}
 		moveTowardsOrderedFloor()
-		
-		select {
-		case <-failedToReachFloorTimer.C:
-			return false
-		case driver.GetFloorSensor() == 0:
-			break
-		}
+		for{
+			if (driver.GetFloorSensor() == 0){
+				break
+			}
+			select {
+			case <-failedToReachFloorTimer.C:
+				return false
+			default:
 
+			}
+		}
 	} else {
 		//Elevator is in 1 floor so send it up and down one floor to confirm that it's working
 		CurrentOrder = constants.Order{Floor: 1, Direction: constants.DirStop, ElevatorID: "-1"}
 		moveTowardsOrderedFloor()
 		
-		select {
-		case <-failedToReachFloorTimer.C:
-			return false
-		case driver.GetFloorSensor() == 1:
-			break
+		for{
+			if (driver.GetFloorSensor() == 1){
+				break
+			}
+			select {
+			case <-failedToReachFloorTimer.C:
+				return false
+			default:
+				
+			}
 		}
 
 		CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: "-1"}
 		moveTowardsOrderedFloor()
 
-		select {
-		case <-failedToReachFloorTimer.C:
-			return false
-		case driver.GetFloorSensor() == 0:
-			break
+		for{
+			if (driver.GetFloorSensor() == 0){
+				break
+			}
+			select {
+			case <-failedToReachFloorTimer.C:
+				return false
+			default:
+				
+			}
 		}
 	}
 

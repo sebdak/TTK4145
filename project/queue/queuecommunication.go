@@ -4,8 +4,6 @@ import (
 	constants "../constants"
 	elevator "../elevator"
 	network "../network"
-	"fmt"
-	"reflect"
 	"time"
 )
 
@@ -125,7 +123,7 @@ func sendElevatorHeading() {
 		heading := constants.ElevatorHeading{
 			LastFloor:    elevator.LastFloor,
 			CurrentOrder: elevator.CurrentOrder,
-			Direction:    elevator.Direction
+			Direction:    elevator.Direction,
 			Id:           network.Id,
 		}
 

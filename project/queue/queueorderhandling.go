@@ -5,8 +5,6 @@ import (
 	elevator "../elevator"
 	network "../network"
 	"fmt"
-	"reflect"
-	"time"
 )
 
 

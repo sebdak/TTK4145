@@ -2,11 +2,7 @@ package queue
 
 import (
 	constants "../constants"
-	elevator "../elevator"
-	network "../network"
-	"fmt"
 	"reflect"
-	"time"
 )
 
 var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)

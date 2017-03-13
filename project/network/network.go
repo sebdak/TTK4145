@@ -5,7 +5,6 @@ import (
 	bcast "./bcast"
 	localip "./localip"
 	peers "./peers"
-	"flag"
 	"fmt"
 	"os"
 	"time"
