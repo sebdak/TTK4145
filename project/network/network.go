@@ -99,6 +99,7 @@ func lookForChangeInPeers() {
 		*/
 
 		if(len(PeersInfo.Lost) > 0){
+			fmt.Println("IM LOST")
 			handleLostElevator()
 		}
 	}
