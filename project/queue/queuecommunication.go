@@ -5,6 +5,7 @@ import (
 	elevator "../elevator"
 	network "../network"
 	"time"
+	"fmt"
 )
 
 
@@ -41,9 +42,8 @@ func getExternalQueuesAndUpdate() {
 }
 
 func updateOrdersThatNeedToBeAdded() {
-	var indexesToDelete []int
 	<-ordersThatNeedToBeAddedMutex
-
+	var indexesToDelete []int
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 		for j := 0; j < len(externalQueues[0]); j++ {
 			if ordersThatNeedToBeAdded[i].Floor == externalQueues[0][j].Floor && ordersThatNeedToBeAdded[i].Direction == externalQueues[0][j].Direction {
@@ -56,6 +56,8 @@ func updateOrdersThatNeedToBeAdded() {
 	for i := 0; i < len(indexesToDelete); i++ {
 		index := indexesToDelete[i]
 		ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded[:index], ordersThatNeedToBeAdded[(index+1):]...)
+		break
+
 	}
 
 	ordersThatNeedToBeAddedMutex <- true
@@ -83,6 +85,7 @@ func updateOrdersThatAreHandled() {
 	for i := 0; i < len(indexesToDelete); i++ {
 		index := indexesToDelete[i]
 		ordersThatAreHandled = append(ordersThatAreHandled[:index], ordersThatAreHandled[(index+1):]...)
+		break
 	}
 
 	ordersThatAreHandledMutex <- true

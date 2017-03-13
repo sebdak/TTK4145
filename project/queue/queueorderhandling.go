@@ -29,8 +29,10 @@ func handleExternalButtonOrder() {
 	for {
 
 		order := <-newExternalOrderCh
+		fmt.Println("Test")
 		if checkIfNewExternalOrder(order) && !isOrderInNeedToBeAddedList(order) && network.Online == true {
 			<-ordersThatNeedToBeAddedMutex
+			fmt.Println("Test")
 			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 			ordersThatNeedToBeAddedMutex <- true
 		}
