@@ -11,7 +11,7 @@ import (
 )
 
 var LastFloor int
-var lastOrder constants.Order
+var unexpeditedOrder bool
 var CurrentOrder constants.Order
 var Direction constants.ElevatorDirection
 var state constants.ElevatorState
@@ -34,7 +34,10 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 	//Elevator stuff
 	state = constants.Initializing
 	driver.InitElev()
-	run()
+	go run()
+	for(state == constants.Initializing){
+
+	}
 
 }
 
@@ -54,7 +57,7 @@ func run() {
 			break
 
 		case constants.AtFloor:
-			if CurrentOrder != lastOrder {
+			if unexpeditedOrder == true {
 				moveTowardsOrderedFloor()
 				state = constants.Moving
 			}
@@ -65,7 +68,7 @@ func run() {
 
 			secureElevatorIsMoving()
 
-			if LastFloor == CurrentOrder.Floor && (CurrentOrder.Direction == Direction ||CurrentOrder.Direction == constants.DirStop) { 
+			if LastFloor == CurrentOrder.Floor { 
 
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
@@ -88,7 +91,8 @@ func testElevator() bool {
 	if driver.GetFloorSensor() != 0 {
 		//Send elevator to 1 floor and check that it's reached
 		CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: "-1"}
-		moveTowardsOrderedFloor()
+		Direction = constants.DirDown
+		driver.SetMotorDir(Direction)
 		for{
 			if (driver.GetFloorSensor() == 0){
 				break
@@ -102,8 +106,8 @@ func testElevator() bool {
 		}
 	} else {
 		//Elevator is in 1 floor so send it up and down one floor to confirm that it's working
-		CurrentOrder = constants.Order{Floor: 1, Direction: constants.DirStop, ElevatorID: "-1"}
-		moveTowardsOrderedFloor()
+		Direction = constants.DirUp
+		driver.SetMotorDir(Direction)
 		
 		for{
 			if (driver.GetFloorSensor() == 1){
@@ -117,8 +121,8 @@ func testElevator() bool {
 			}
 		}
 
-		CurrentOrder = constants.Order{Floor: 0, Direction: constants.DirStop, ElevatorID: "-1"}
-		moveTowardsOrderedFloor()
+		Direction = constants.DirDown
+		driver.SetMotorDir(Direction)
 
 		for{
 			if (driver.GetFloorSensor() == 0){
@@ -135,7 +139,7 @@ func testElevator() bool {
 
 	Direction = constants.DirStop
 	driver.SetMotorDir(Direction)
-	lastOrder = CurrentOrder
+	unexpeditedOrder = false
 	LastFloor = 0
 	return true
 }
@@ -147,6 +151,7 @@ func lookForNewQueueOrder() {
 			Direction = constants.DirStop //Internalqueue has no new orders
 		} else {
 			CurrentOrder = order
+			unexpeditedOrder = true
 			fmt.Println("New elevator order: ", CurrentOrder.Floor, CurrentOrder.Direction, Direction)
 		}
 	}
@@ -207,10 +212,11 @@ func orderedFloorReachedRoutine() {
 	driver.SetMotorDir(constants.DirStop)
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0) //Cab order lights can be directly shut off by elevator
 
-	lastOrder = CurrentOrder
+	unexpeditedOrder = false
 
 	//Tell queue order has been handled
 	handledOrderCh <- CurrentOrder
+	fmt.Println("Handled order: ", CurrentOrder)
 
 	//Start floortimer and open doors
 	driver.SetDoorOpenLamp(1)

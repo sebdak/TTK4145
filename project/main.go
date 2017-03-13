@@ -5,6 +5,7 @@ import (
 	elevator "./elevator"
 	network "./network"
 	queue "./queue"
+	"fmt"
 )
 
 func main() {
@@ -30,6 +31,8 @@ func main() {
 		handledOrderChannel,
 		hallLightChannel)
 
+	fmt.Println("Init elev ok")
+
 	network.InitNetwork(newOrderChannel,
 		peerDisconnectsChannel,
 		elevatorHeadingTxChannel,
@@ -40,6 +43,8 @@ func main() {
 		externalOrderRx,
 		handledExternalOrderTx,
 		handledExternalOrderRx)
+
+	fmt.Println("Init network ok")
 
 	queue.InitQueue(newOrderChannel,
 		newExternalOrderChannel,
@@ -55,6 +60,8 @@ func main() {
 		externalOrderRx,
 		handledExternalOrderTx,
 		handledExternalOrderRx)
+
+	fmt.Println("Init queue ok")
 
 	hopefullyRunSucessfullyForever := make(chan bool)
 	<-hopefullyRunSucessfullyForever

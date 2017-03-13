@@ -17,6 +17,7 @@ func handleNewCabOrder() {
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, order)
 			updateElevatorNextOrder()
+			fmt.Println("Internalqueue: ", internalQueue)
 			internalQueueMutex <- true
 		}
 	}
@@ -71,6 +72,7 @@ func handleCompletedCabOrder() {
 		deleteOrderFromInternalQueue(order)
 		updateElevatorNextOrder()
 		internalQueueMutex <- true
+		fmt.Println("Updated internalqueue after handled order: ", internalQueue)
 	}
 }
 
@@ -149,7 +151,7 @@ func deleteOrderFromInternalQueue(order constants.Order) {
 func deleteOrderFromExternalQueue(order constants.Order) {
 	//Assume that externalqueuesmutex is taken in function that calls this
 	for i:= 0; i < constants.QueueCopies; i++{
-		for j := 0; j < len(externalQueues[0]); j++ {
+		for j := 0; j < len(externalQueues[i]); j++ {
 			if externalQueues[i][j].Floor == order.Floor && externalQueues[i][j].Direction == order.Direction {
 				externalQueues[i] = append(externalQueues[i][:j], externalQueues[i][(j+1):]...)
 				break
