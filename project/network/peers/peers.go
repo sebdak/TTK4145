@@ -15,7 +15,7 @@ type PeerUpdate struct {
 	Lost  []string
 }
 
-const interval = 15 * time.Millisecond
+const interval = 100 * time.Millisecond
 const timeout = 500 * time.Millisecond
 
 func Transmitter(port int, id string, transmitEnable <-chan bool) {
