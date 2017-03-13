@@ -233,7 +233,7 @@ func updateElevatorNextOrder() {
 
 		for i := 0; i < len(internalQueue); i++ {
 
-			dist := findDistToFloor(internalQueue[i], elevator.Direction, elevator.LastFloor)
+			dist := findDistToFloor(internalQueue[i], elevator.Direction, elevator.LastFloor,internalQueue[i])
 			if dist < bestDistSoFar {
 
 				bestDistSoFar = dist
@@ -284,7 +284,7 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 		}
 
 		//Add 2 to dist because elevator needs to stop before handling this order
-		if(destinationOrder.Floor > currentOrder){
+		if(destinationOrder.Floor > currentOrder.Floor){
 			dist += 1
 		}
 
@@ -300,7 +300,7 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 		}
 
 		//Add 2 to dist because elevator needs to stop before handling this order
-		if(destinationOrder.Floor < currentOrder){
+		if(destinationOrder.Floor < currentOrder.Floor){
 			dist += 1
 		}
 
