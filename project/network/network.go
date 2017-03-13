@@ -25,6 +25,7 @@ var externalOrderTx chan constants.Order
 var externalOrderRx chan constants.Order
 var handledExternalOrderTx chan constants.Order
 var handledExternalOrderRx chan constants.Order
+var masterRx chan string
 
 var PeersInfo peers.PeerUpdate
 var Id string = ""
@@ -61,7 +62,8 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
 
-    go checkIfMasterIsAlive()
+	go listenForMaster()
+    checkIfMasterIsAlive()
 
 	go transceiveElevatorHeading()
 	go transceiveNewExternalOrder()
@@ -69,8 +71,6 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	go transceiveQueues()
 
 }
-
-func listenForMaster(){}
 
 func transceiveElevatorHeading() {
 	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
@@ -138,7 +138,7 @@ func masterBroadcast() {
 		if Master == true {
 			masterTx <- Id
 		}
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
@@ -179,22 +179,26 @@ func testIfOnline() bool {
 	return true
 }
 
-func checkIfMasterIsAlive() {
-	if Master != true {
+func listenForMaster(){
+	masterRx := make(chan string)
+	go bcast.Receiver(constants.MasterPort, masterRx)
+}
 
-		masterRx := make(chan string)
-		go bcast.Receiver(constants.MasterPort, masterRx)
+func checkIfMasterIsAlive() {
+
 		noMasterTimer := time.NewTimer(time.Millisecond * 500)
 
 		select {
 		case <-noMasterTimer.C:
 			chooseMasterSlave()
 		case <-masterRx:
-			Master = false
-			fmt.Println("other master on network")
+			if(Master != true){
+				Master = false
+				fmt.Println("other master on network")
+			}
 		}
 
-	}
+	
 }
 
 func StartUDPPeersBroadcast() {
