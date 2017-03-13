@@ -52,7 +52,7 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	}
 
 	//start peers broadcast
-	go StartUDPPeersBroadcast()
+	StartUDPPeersBroadcast()
 
 	go masterBroadcast()
 	//Update peers on network
@@ -61,7 +61,7 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
 
-	checkIfMasterIsAlive()
+    go checkIfMasterIsAlive()
 
 	go transceiveElevatorHeading()
 	go transceiveNewExternalOrder()
