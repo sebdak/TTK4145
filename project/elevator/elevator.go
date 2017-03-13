@@ -45,6 +45,7 @@ func run() {
 		case constants.Initializing:
 			if(testElevator() == true){
 				state = constants.AtFloor
+				Direction = constants.DirStop
 				go lookForOrderButtonPress()
 				go lookForNewQueueOrder()
 				go setHallLights()

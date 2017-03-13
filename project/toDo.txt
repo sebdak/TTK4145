@@ -5,7 +5,6 @@ To-do
 - Vurdere headingsmutex
 	- Når man skriver/leser entry i map, finnes det funksjoner på hardwarenivå som hindrer kræsj når dette skjer samtidig?
 - Vurdere tre kopier av internalqueue
-- Bug: når heis faller av nettverket vil det oppstå mutex problemer om den skal kunne operere med internordrene
 
 
 
@@ -47,6 +46,7 @@ HallLys settes i lys av externalqueue, de andre i lys av hardware
 - Gå gjennom hele new external order prosessen og se hvor bugs kan oppstå
 - Ny ordre burde slettes individuelt fra køkopiene
 - Bug: når heis er offline og man bestiller nye externordre så stackes de i eksternordremåblilagttilarrayet, så hvis heis kommer online igjen skjer det shit
+- Bug: når heis faller av nettverket vil det oppstå mutex problemer om den skal kunne operere med internordrene
 
 --------------------------------------------------------------------------------
 Endre headingsavsending
