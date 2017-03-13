@@ -138,6 +138,9 @@ func masterBroadcast() {
 }
 
 func handleLostElevator() {
+	for i:= 0; i < len(PeersInfo.Lost); i++{
+		fmt.Println("Peer lost:", PeersInfo.Lost[i])
+	}
 
 	if testIfOnline() {
 		//Check if master lives - if not decide new master
