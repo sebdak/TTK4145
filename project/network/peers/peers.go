@@ -60,6 +60,7 @@ func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
 			}
 
 			lastSeen[id] = time.Now()
+			fmt.Println("Id:", id)
 		}
 
 		// Removing dead connection
