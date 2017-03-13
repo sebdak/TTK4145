@@ -283,7 +283,9 @@ func updateHallLights() {
 				}
 			}
 		} else if len(q) == 0 { //No ext. orders -> no lights should be lit
+			qCopy = q 
 			for i := 0; i < constants.NumberOfFloors; i++ {
+				//fmt.Println("Skrudde av alle lys fordi kølengden er 0")
 				driver.SetButtonLamp(constants.ButtonCallUp, i, 0)
 				driver.SetButtonLamp(constants.ButtonCallDown, i, 0)
 			}

@@ -5,7 +5,6 @@ import (
 	elevator "../elevator"
 	network "../network"
 	"time"
-	"fmt"
 )
 
 
@@ -29,7 +28,6 @@ func getExternalQueuesAndUpdate() {
 			for i := 0; i < constants.QueueCopies; i++ {
 				externalQueues[i] = extQueue
 			}
-			fmt.Println("Endret externalqueue til: ", extQueue)
 		}
 		addExternalOrdersForThisElevator()
 		//stop spamming of order if in new queue
@@ -156,7 +154,6 @@ func masterGetExternalOrdersThatAreHandled() {
 			if checkIfNewExternalOrder(order) == false && !isOrderInNeedToBeAddedList(order) {
 				<- externalQueuesMutex
 				deleteOrderFromExternalQueue(order)
-				fmt.Println("ExtQueue etter at master har fjernet håndtert ordre ", externalQueues[0])
 				externalQueuesMutex <- true
 			}
 		}
@@ -169,13 +166,11 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 			order := <-externalOrderRx
 			//Check because master can have already handled order while slave still is spamming
 			if checkIfNewExternalOrder(order) == true && !isOrderInHandledOrdersList(order) {
-				fmt.Println("Legger til ordre som må håndteres: ", order)
 				order.ElevatorID = masterChooseElevatorThatTakesOrder(order)
 				<-externalQueuesMutex
 				for i := 0; i < constants.QueueCopies; i++ {
 					externalQueues[i] = append(externalQueues[i], order)
 				}
-				fmt.Println("Ext.queue etter ordre som måtte legges til er lagt til: ", order)
 				externalQueuesMutex <- true
 			}
 		}

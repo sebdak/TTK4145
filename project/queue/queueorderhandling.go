@@ -17,7 +17,6 @@ func handleNewCabOrder() {
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, order)
 			updateElevatorNextOrder()
-			fmt.Println("Internalqueue: ", internalQueue)
 			internalQueueMutex <- true
 		}
 	}
@@ -72,7 +71,6 @@ func handleCompletedCabOrder() {
 		deleteOrderFromInternalQueue(order)
 		updateElevatorNextOrder()
 		internalQueueMutex <- true
-		fmt.Println("Updated internalqueue after handled order: ", internalQueue)
 	}
 }
 
@@ -245,7 +243,6 @@ func updateElevatorNextOrder() {
 
 		}
 		fmt.Println("best order: ", bestFloorSoFar)
-		fmt.Println("extqueue: ", externalQueues[0])
 		nextFloorCh <- bestFloorSoFar
 	} else {
 		nextFloorCh <- constants.Order{Floor: -1, Direction: constants.DirStop, ElevatorID: "-1"} //Send empty order, telling elevator there are no new orders
@@ -276,7 +273,7 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 		if destinationOrder.Floor > currentFloor && (destinationOrder.Direction == constants.DirUp || destinationOrder.Direction == constants.DirStop) {
 			dist = destinationOrder.Floor - currentFloor
 		} else if destinationOrder.Floor > currentFloor && (destinationOrder.Direction == constants.DirDown) {
-			dist = ((constants.NumberOfFloors - 1) - currentFloor) + destinationOrder.Floor
+			dist = ((constants.NumberOfFloors - 1) - currentFloor) + (constants.NumberOfFloors - 1) -  destinationOrder.Floor
 		} else if destinationOrder.Floor <= currentFloor && (destinationOrder.Direction == constants.DirDown || destinationOrder.Direction == constants.DirStop) {
 			dist = (constants.NumberOfFloors - 1) - currentFloor + (constants.NumberOfFloors - 1) - destinationOrder.Floor
 		} else if destinationOrder.Floor <= currentFloor && (destinationOrder.Direction == constants.DirUp) {
