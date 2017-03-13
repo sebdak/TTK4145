@@ -37,7 +37,7 @@ func Transmitter(port int, id string, transmitEnable <-chan bool) {
 
 func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
 
-	var buf [1024]byte
+	var buf [2048]byte
 	var p PeerUpdate
 	lastSeen := make(map[string]time.Time)
 

@@ -52,7 +52,7 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	}
 
 	//start peers broadcast
-	StartUDPPeersBroadcast()
+	go StartUDPPeersBroadcast()
 
 	go masterBroadcast()
 	//Update peers on network
