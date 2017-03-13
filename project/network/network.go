@@ -25,7 +25,6 @@ var externalOrderTx chan constants.Order
 var externalOrderRx chan constants.Order
 var handledExternalOrderTx chan constants.Order
 var handledExternalOrderRx chan constants.Order
-var masterRx chan string
 
 var PeersInfo peers.PeerUpdate
 var Id string = ""
@@ -62,20 +61,16 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
 
-	listenForMaster()
 	checkIfMasterIsAlive()
 
-	transceiveElevatorHeading()
-	transceiveNewExternalOrder()
-	transceiveHandledExternalOrder()
-	transceiveQueues()
+	go transceiveElevatorHeading()
+	go transceiveNewExternalOrder()
+	go transceiveHandledExternalOrder()
+	go transceiveQueues()
 
 }
 
-func listenForMaster(){
-	masterRx := make(chan string)
-	go bcast.Receiver(constants.MasterPort, masterRx)
-}
+func listenForMaster(){}
 
 func transceiveElevatorHeading() {
 	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
@@ -90,11 +85,6 @@ func transceiveNewExternalOrder() {
 func transceiveHandledExternalOrder() {
 	go bcast.Transmitter(constants.HandledExternalOrderPort, handledExternalOrderTx)
 	go bcast.Receiver(constants.HandledExternalOrderPort, handledExternalOrderRx)
-}
-
-func transceiveQueues() {
-	go bcast.Transmitter(constants.QueuePort, queuesTx)
-	go bcast.Receiver(constants.QueuePort, queuesRx)
 }
 
 func lookForChangeInPeers() {
@@ -112,7 +102,10 @@ func lookForChangeInPeers() {
 	}
 }
 
-
+func transceiveQueues() {
+	go bcast.Transmitter(constants.QueuePort, queuesTx)
+	go bcast.Receiver(constants.QueuePort, queuesRx)
+}
 
 func chooseMasterSlave() {
 	smallestID := PeersInfo.Peers[0]
@@ -142,7 +135,7 @@ func masterBroadcast() {
 		if Master == true {
 			masterTx <- Id
 		}
-		time.Sleep(time.Millisecond * 50)
+		time.Sleep(time.Millisecond * 10)
 	}
 }
 
@@ -185,6 +178,9 @@ func testIfOnline() bool {
 
 func checkIfMasterIsAlive() {
 	if Master != true {
+
+		masterRx := make(chan string)
+		go bcast.Receiver(constants.MasterPort, masterRx)
 		noMasterTimer := time.NewTimer(time.Millisecond * 500)
 
 		select {
