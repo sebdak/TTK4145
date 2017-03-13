@@ -9,21 +9,21 @@ import (
 )
 
 func main() {
-	newOrderChannel := make(chan constants.Order)
-	newExternalOrderChannel := make(chan constants.Order)
-	nextFloorChannel := make(chan constants.Order)
-	handledOrderChannel := make(chan constants.Order)
-	peerDisconnectsChannel := make(chan string)
-	hallLightChannel := make(chan []constants.Order)
+	newOrderChannel := make(chan constants.Order,1)
+	newExternalOrderChannel := make(chan constants.Order,1)
+	nextFloorChannel := make(chan constants.Order,1)
+	handledOrderChannel := make(chan constants.Order,1)
+	peerDisconnectsChannel := make(chan string,1)
+	hallLightChannel := make(chan []constants.Order,1)
 
-	elevatorHeadingTxChannel := make(chan constants.ElevatorHeading)
-	elevatorHeadingRxChannel := make(chan constants.ElevatorHeading)
-	queuesTxChannel := make(chan []constants.Order)
-	queuesRxChannel := make(chan []constants.Order)
-	externalOrderTx := make(chan constants.Order)
-	externalOrderRx := make(chan constants.Order)
-	handledExternalOrderTx := make(chan constants.Order)
-	handledExternalOrderRx := make(chan constants.Order)
+	elevatorHeadingTxChannel := make(chan constants.ElevatorHeading,1)
+	elevatorHeadingRxChannel := make(chan constants.ElevatorHeading,1)
+	queuesTxChannel := make(chan []constants.Order,1)
+	queuesRxChannel := make(chan []constants.Order,1)
+	externalOrderTx := make(chan constants.Order,1)
+	externalOrderRx := make(chan constants.Order,1)
+	handledExternalOrderTx := make(chan constants.Order,1)
+	handledExternalOrderRx := make(chan constants.Order,1)
 
 	elevator.InitElev(newOrderChannel,
 		newExternalOrderChannel,
