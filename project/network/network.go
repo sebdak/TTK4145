@@ -25,6 +25,7 @@ var externalOrderTx chan constants.Order
 var externalOrderRx chan constants.Order
 var handledExternalOrderTx chan constants.Order
 var handledExternalOrderRx chan constants.Order
+var masterRx chan string
 
 var PeersInfo peers.PeerUpdate
 var Id string = ""
@@ -61,13 +62,19 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
 
+	listenForMaster()
 	checkIfMasterIsAlive()
 
-	go transceiveElevatorHeading()
-	go transceiveNewExternalOrder()
-	go transceiveHandledExternalOrder()
-	go transceiveQueues()
+	transceiveElevatorHeading()
+	transceiveNewExternalOrder()
+	transceiveHandledExternalOrder()
+	transceiveQueues()
 
+}
+
+func listenForMaster(){
+	masterRx := make(chan string)
+	go bcast.Receiver(constants.MasterPort, masterRx)
 }
 
 func transceiveElevatorHeading() {
@@ -85,6 +92,11 @@ func transceiveHandledExternalOrder() {
 	go bcast.Receiver(constants.HandledExternalOrderPort, handledExternalOrderRx)
 }
 
+func transceiveQueues() {
+	go bcast.Transmitter(constants.QueuePort, queuesTx)
+	go bcast.Receiver(constants.QueuePort, queuesRx)
+}
+
 func lookForChangeInPeers() {
 	for {
 		ps := <-peerUpdateCh
@@ -100,10 +112,7 @@ func lookForChangeInPeers() {
 	}
 }
 
-func transceiveQueues() {
-	go bcast.Transmitter(constants.QueuePort, queuesTx)
-	go bcast.Receiver(constants.QueuePort, queuesRx)
-}
+
 
 func chooseMasterSlave() {
 	smallestID := PeersInfo.Peers[0]
@@ -176,9 +185,6 @@ func testIfOnline() bool {
 
 func checkIfMasterIsAlive() {
 	if Master != true {
-
-		masterRx := make(chan string)
-		go bcast.Receiver(constants.MasterPort, masterRx)
 		noMasterTimer := time.NewTimer(time.Millisecond * 500)
 
 		select {
