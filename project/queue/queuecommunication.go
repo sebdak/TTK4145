@@ -5,6 +5,7 @@ import (
 	elevator "../elevator"
 	network "../network"
 	"time"
+	"fmt"
 )
 
 
@@ -142,6 +143,7 @@ func getElevatorHeadings() {
 	var heading constants.ElevatorHeading
 	for {
 		heading = <-elevatorHeadingRx
+		fmt.Println("New heading: ", heading)
 		headings[heading.Id] = heading
 	}
 }
