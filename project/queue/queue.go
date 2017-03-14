@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"io"
 	"strings"
+	"sync"
 )
 
 var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
@@ -19,10 +20,10 @@ var externalQueues [][]constants.Order
 var ordersThatNeedToBeAdded []constants.Order
 var ordersThatAreHandled []constants.Order
 
-var internalQueueMutex chan bool = make(chan bool, 1)
-var externalQueuesMutex chan bool = make(chan bool, 1)
-var ordersThatNeedToBeAddedMutex chan bool = make(chan bool, 1)
-var ordersThatAreHandledMutex chan bool = make(chan bool, 1)
+var internalQueueMutex = &sync.Mutex{}
+var externalQueuesMutex = &sync.Mutex{}
+var ordersThatNeedToBeAddedMutex = &sync.Mutex{}
+var ordersThatAreHandledMutex = &synd.Mutex{}
 
 var hallLightCh chan []constants.Order
 var newOrderCh chan constants.Order
@@ -60,12 +61,6 @@ func InitQueue(newOrderChannel chan constants.Order, newExternalOrderChannel cha
 	externalOrderRx = externalOrderRxChannel
 	handledExternalOrderTx = handledExternalOrderTxChannel
 	handledExternalOrderRx = handledExternalOrderRxChannel
-
-	//mutex := true
-	internalQueueMutex <- true
-	externalQueuesMutex <- true
-	ordersThatNeedToBeAddedMutex <- true
-	ordersThatAreHandledMutex <- true
 
 	//init external queue
 	initQueues()

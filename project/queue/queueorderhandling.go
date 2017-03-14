@@ -15,11 +15,11 @@ func handleNewCabOrder() {
 
 		if checkIfNewInternalOrder(order) {
 
-			<-internalQueueMutex
+			internalQueueMutex.Lock()
 			internalQueue = append(internalQueue, order)
 			writeInternalQueueToFile()
 			updateElevatorNextOrder()
-			internalQueueMutex <- true
+			internalQueueMutex.Unlock()
 
 		}
 
@@ -37,9 +37,9 @@ func handleExternalButtonOrder() {
 
 		if checkIfNewExternalOrder(order) && !isOrderInNeedToBeAddedList(order) && network.Online == true {
 
-			<-ordersThatNeedToBeAddedMutex
+			ordersThatNeedToBeAddedMutex.Lock()
 			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
-			ordersThatNeedToBeAddedMutex <- true
+			ordersThatNeedToBeAddedMutex.Unlock()
 
 		}
 
@@ -49,19 +49,17 @@ func handleExternalButtonOrder() {
 
 func isOrderInNeedToBeAddedList(order constants.Order) bool {
 	
-	<-ordersThatNeedToBeAddedMutex
+	ordersThatNeedToBeAddedMutex.Lock()
+	defer ordersThatNeedToBeAddedMutex.Unlock()
 
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 
 		if ordersThatNeedToBeAdded[i] == order {
-
-			ordersThatNeedToBeAddedMutex <- true
+			
 			return true
 
 		}
 	}
-
-	ordersThatNeedToBeAddedMutex <- true
 	return false
 }
 
@@ -79,17 +77,17 @@ func handleCompletedCabOrder() {
 		//Check if order was external and that it is not already in handledOrderslist. If elev is off network there's no need telling others order has been handled
 		if order.Direction != constants.DirStop && !isOrderInHandledOrdersList(order) && network.Online == true {
 
-			<-ordersThatAreHandledMutex
+			ordersThatAreHandledMutex.Lock()
 			ordersThatAreHandled = append(ordersThatAreHandled, order)
-			ordersThatAreHandledMutex <- true
+			ordersThatAreHandledMutex.Unlock()
 
 		}
 
-		<-internalQueueMutex
+		internalQueueMutex.Lock()
 		deleteOrderFromInternalQueue(order)
 		writeInternalQueueToFile()
 		updateElevatorNextOrder()
-		internalQueueMutex <- true
+		internalQueueMutex.Unlock()
 
 	}
 
@@ -97,20 +95,19 @@ func handleCompletedCabOrder() {
 
 func isOrderInHandledOrdersList(order constants.Order) bool {
 	
-	<-ordersThatAreHandledMutex
+	ordersThatAreHandledMutex.Lock()
+	defer ordersThatAreHandledMutex.Unlock()
 
 	for i := 0; i < len(ordersThatAreHandled); i++ {
 
 		if ordersThatAreHandled[i] == order {
-
-			ordersThatAreHandledMutex <- true
+			
 			return true
 
 		}
 
 	}
 
-	ordersThatAreHandledMutex <- true
 	return false
 
 }
@@ -119,40 +116,38 @@ func isOrderInHandledOrdersList(order constants.Order) bool {
 // -----------General functions on orders----------------------------------
 func checkIfNewExternalOrder(order constants.Order) bool {
 	
-	<-externalQueuesMutex
+	externalQueuesMutex.Lock()
+	defer externalQueuesMutex.Unlock()
 
 	for j := 0; j < len(externalQueues[0]); j++ {
 
 		if externalQueues[0][j].Floor == order.Floor && externalQueues[0][j].Direction == order.Direction {
 
-			externalQueuesMutex <- true
 			return false
 
 		}
 
 	}
 
-	externalQueuesMutex <- true
 	return true
 
 }
 
 func checkIfNewInternalOrder(order constants.Order) bool {
 	
-	<-internalQueueMutex
+	internalQueueMutex.Lock()
+	defer internalQueueMutex.Unlock()
 
 	for i := 0; i < len(internalQueue); i++ {
 
 		if internalQueue[i] == order {
 
-			internalQueueMutex <- true
 			return false
 
 		}
 
 	}
 
-	internalQueueMutex <- true
 	return true
 
 }
@@ -248,11 +243,11 @@ func addExternalOrdersForThisElevator() {
 
 			if newOrder == true {
 
-				<-internalQueueMutex
+				internalQueueMutex.Lock()
 				internalQueue = append(internalQueue, externalQueues[0][i])
 				writeInternalQueueToFile()
 				updateElevatorNextOrder()
-				internalQueueMutex <- true
+				internalQueueMutex.Unlock()
 
 			}
 
@@ -267,15 +262,15 @@ func addExternalOrdersForThisElevator() {
 
 func disconnectedTakeAllExternalOrders() {
 	
-	<-externalQueuesMutex
+	externalQueuesMutex.Lock()
 
 	for i := 0; i < len(externalQueues[0]); i++ {
 
 		if checkIfNewInternalOrder(externalQueues[0][i]) {
 
-			<-internalQueueMutex
+			internalQueueMutex.Lock()
 			internalQueue = append(internalQueue, externalQueues[0][i])
-			internalQueueMutex <- true
+			internalQueueMutex.Unlock()
 
 		}
 
@@ -288,7 +283,7 @@ func disconnectedTakeAllExternalOrders() {
 
 	}
 
-	externalQueuesMutex <- true
+	externalQueuesMutex.Unlock()
 
 }
 
@@ -296,8 +291,8 @@ func masterRedistOrders(elevatorId string) {
 	
 	if network.Master == true {
 
-		<-externalQueuesMutex
-		<-ordersThatNeedToBeAddedMutex
+		externalQueuesMutex.Lock()
+		ordersThatNeedToBeAddedMutex.Lock()
 
 		for i := 0; i < len(externalQueues[0]); i++ {
 
@@ -314,8 +309,8 @@ func masterRedistOrders(elevatorId string) {
 
 		}
 	
-		ordersThatNeedToBeAddedMutex <- true
-		externalQueuesMutex <- true
+		ordersThatNeedToBeAddedMutex.Unlock()
+		externalQueuesMutex.Unlock()
 
 	}
 

@@ -13,10 +13,10 @@ func masterSendExternalQueue() {
 		
 		if network.Master == true { 
 
-			<-externalQueuesMutex
+			externalQueuesMutex.Lock()
 			compareAndFixExternalQueues()
 			queuesTx <- externalQueues[0]
-			externalQueuesMutex <- true
+			externalQueuesMutex.Unlock()
 
 		}
 		time.Sleep(time.Millisecond * 50)
@@ -29,7 +29,7 @@ func getExternalQueuesAndUpdate() {
 	for {
 		
 		extQueue := <-queuesRx
-		<-externalQueuesMutex
+		externalQueuesMutex.Lock()
 
 		if (network.Master == false){
 
@@ -50,7 +50,7 @@ func getExternalQueuesAndUpdate() {
 		//Update lights in elevator
 		hallLightCh <- externalQueues[0]
 
-		externalQueuesMutex <- true
+		externalQueuesMutex.Unlock()
 
 	}
 
@@ -58,7 +58,7 @@ func getExternalQueuesAndUpdate() {
 
 func updateOrdersThatNeedToBeAdded() {
 	
-	<-ordersThatNeedToBeAddedMutex
+	ordersThatNeedToBeAddedMutex.Lock()
 
 	var indexesToDelete []int
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
@@ -81,14 +81,14 @@ func updateOrdersThatNeedToBeAdded() {
 
 	}
 
-	ordersThatNeedToBeAddedMutex <- true
+	ordersThatNeedToBeAddedMutex.Unlock()
 }
 
 func updateOrdersThatAreHandled() {
 	
 	var indexesToDelete []int
 
-	<-ordersThatAreHandledMutex
+	ordersThatAreHandledMutex.Lock()
 	for i := 0; i < len(ordersThatAreHandled); i++ {
 
 		safeToDelete := true
@@ -116,7 +116,7 @@ func updateOrdersThatAreHandled() {
 		break
 
 	}
-	ordersThatAreHandledMutex <- true
+	ordersThatAreHandledMutex.Unlock()
 	
 }
 
@@ -126,13 +126,13 @@ func spamExternalOrdersThatAreHandled() {
 		
 		if len(ordersThatAreHandled) > 0 {
 
-			<-ordersThatAreHandledMutex
+			ordersThatAreHandledMutex.Lock()
 			for i := 0; i < len(ordersThatAreHandled); i++ {
 
 				handledExternalOrderTx <- ordersThatAreHandled[i]
 
 			}
-			ordersThatAreHandledMutex <- true
+			ordersThatAreHandledMutex.Unlock()
 
 		}
 
@@ -146,13 +146,13 @@ func spamExternalOrdersThatNeedToBeAdded() {
 		
 		if len(ordersThatNeedToBeAdded) > 0 {
 
-			<-ordersThatNeedToBeAddedMutex
+			ordersThatNeedToBeAddedMutex.Lock()
 			for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 
 				externalOrderTx <- ordersThatNeedToBeAdded[i]
 
 			}
-			ordersThatNeedToBeAddedMutex <- true
+			ordersThatNeedToBeAddedMutex.Unlock()
 
 		}
 
@@ -204,9 +204,9 @@ func masterGetExternalOrdersThatAreHandled() {
 			//Order may have been removed by master before slaves know it
 			if checkIfNewExternalOrder(order) == false && !isOrderInNeedToBeAddedList(order) {
 
-				<- externalQueuesMutex
+				externalQueuesMutex.Lock()
 				deleteOrderFromExternalQueue(order)
-				externalQueuesMutex <- true
+				externalQueuesMutex.Unlock()
 
 			}
 
@@ -229,13 +229,13 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 			if checkIfNewExternalOrder(order) == true && !isOrderInHandledOrdersList(order) {
 
 				order.ElevatorID = masterChooseElevatorThatTakesOrder(order)
-				<-externalQueuesMutex
+				externalQueuesMutex.Lock()
 				for i := 0; i < constants.QueueCopies; i++ {
 
 					externalQueues[i] = append(externalQueues[i], order)
 
 				}
-				externalQueuesMutex <- true
+				externalQueuesMutex.Unlock()
 
 			}
 
