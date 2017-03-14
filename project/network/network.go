@@ -147,6 +147,7 @@ func handleLostElevator() {
 
 	if testIfOnline() {
 		//Check if master lives - if not decide new master
+		<- masterRx 
 		checkIfMasterIsAlive()
 
 		//Tell queue which elevators disconnected
