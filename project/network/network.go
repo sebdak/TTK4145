@@ -180,7 +180,7 @@ func testIfOnline() bool {
 }
 
 func listenForMaster(){
-	masterRx := make(chan string,1)
+	masterRx = make(chan string,1)
 	go bcast.Receiver(constants.MasterPort, masterRx)
 }
 
