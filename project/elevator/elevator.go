@@ -44,6 +44,7 @@ func InitElev(newOrderChannel chan constants.Order, newExternalOrderChannel chan
 func run() {
 
 	for {
+		fmt.Println("42")
 		switch state {
 		case constants.Initializing:
 			if(testElevator() == true){
@@ -86,6 +87,7 @@ func run() {
 }
 
 func testElevator() bool {
+	fmt.Println("43")
 	failedToReachFloorTimer := time.NewTimer(time.Second * 12)
 
 	if driver.GetFloorSensor() != 0 {
@@ -146,6 +148,7 @@ func testElevator() bool {
 
 func lookForNewQueueOrder() {
 	for {
+		fmt.Println("44")
 		order := <-nextFloorCh
 		if order.Floor == -1{
 			Direction = constants.DirStop //Internalqueue has no new orders
@@ -158,11 +161,13 @@ func lookForNewQueueOrder() {
 }
 
 func moveTowardsOrderedFloor() {
+	fmt.Println("45")
 	setDirection()
 	driver.SetMotorDir(Direction)
 }
 
 func setDirection() {
+	fmt.Println("46")
 	if LastFloor == 0 {
 		Direction = constants.DirUp
 	} else if LastFloor == constants.NumberOfFloors-1 {
@@ -178,6 +183,7 @@ func setDirection() {
 
 func secureElevatorIsMoving() {
 	//start timer first
+	fmt.Println("47")
 	failedToReachFloorTimer := time.NewTimer(time.Second * 12)
 
 	//lookForChangeInFloor will return false if the timer times out
@@ -190,6 +196,7 @@ func secureElevatorIsMoving() {
 func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 
 	for {
+		fmt.Println("48")
 		currentFloorSignal := driver.GetFloorSensor()
 		if currentFloorSignal != -1 && (LastFloor != currentFloorSignal || CurrentOrder.Floor == currentFloorSignal){
 			LastFloor = currentFloorSignal
@@ -209,6 +216,7 @@ func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 }
 
 func orderedFloorReachedRoutine() {
+	fmt.Println("49")
 	driver.SetMotorDir(constants.DirStop)
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0) //Cab order lights can be directly shut off by elevator
 
@@ -229,6 +237,7 @@ func lookForOrderButtonPress() {
 	var newOrder constants.Order
 
 	for {
+		fmt.Println("50")
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
 
 			if driver.GetButtonSignal(constants.ButtonCommand, floor) == 1 {
@@ -257,6 +266,7 @@ func lookForOrderButtonPress() {
 func updateHallLights() {
 	var qCopy []constants.Order
 	for {
+		fmt.Println("51")
 		q := <-hallLightCh
 		if reflect.DeepEqual(q, qCopy) == false && len(q) > 0 { //To avoid setting lights all the time without receiving new external queue
 			qCopy = q 
