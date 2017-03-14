@@ -147,15 +147,14 @@ func handleLostElevator() {
 
 	if testIfOnline() {
 		//Check if master lives - if not decide new master
-		time.Sleep(time.Millisecond*1000)
-		for{
-			select{
-			case <- masterRx:
-		
-			default:
-				break
+		L:
+			for {
+			    select {
+			    case <-masterRx:
+			    default:
+			       break L
+			    }
 			}
-		}
 		checkIfMasterIsAlive()
 
 		//Tell queue which elevators disconnected
