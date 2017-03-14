@@ -89,7 +89,7 @@ func transceiveHandledExternalOrder() {
 func lookForChangeInPeers() {
 	for {
 		PeersInfo= <-peerUpdateCh
-
+		fmt.Println("Peers: ", PeersInfo.Peers)
 		/*
 		if(!reflect.DeepEqual(ps, PeersInfo)){
 			fmt.Println("Peersupdate: ", ps)
@@ -193,6 +193,7 @@ func checkIfMasterIsAlive() {
 			chooseMasterSlave()
 			break
 		case <-masterRx:
+			fmt.Println("Mottok mastersignal")
 			if(Master != true){
 				Master = false
 				fmt.Println("other master on network")
