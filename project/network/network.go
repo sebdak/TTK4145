@@ -52,81 +52,32 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 		time.Sleep(time.Second * 3)
 	}
 
-	//start peers broadcast
 	StartUDPPeersBroadcast()
 
 	go masterBroadcast()
-	//Update peers on network
 	go lookForChangeInPeers()
 
-	go listenForMaster()
-	//wait one second for peers to come online
+	listenForMaster()
+
+	//Wait one second for other peers to come online
 	time.Sleep(time.Second)
+
     checkIfMasterIsAlive()
 
-	go transceiveElevatorHeading()
-	go transceiveNewExternalOrder()
-	go transceiveHandledExternalOrder()
-	go transceiveQueues()
+	transceiveElevatorHeading()
+	transceiveNewExternalOrder()
+	transceiveHandledExternalOrder()
+	transceiveQueues()
 
 }
 
-func transceiveElevatorHeading() {
-	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
-	go bcast.Receiver(constants.HeadingPort, elevatorHeadingRx)
-}
+func StartUDPPeersBroadcast() {
 
-func transceiveNewExternalOrder() {
-	go bcast.Transmitter(constants.NewExternalOrderPort, externalOrderTx)
-	go bcast.Receiver(constants.NewExternalOrderPort, externalOrderRx)
-}
+	peerUpdateCh = make(chan peers.PeerUpdate)
+	peerTxEnable := make(chan bool)
 
-func transceiveHandledExternalOrder() {
-	go bcast.Transmitter(constants.HandledExternalOrderPort, handledExternalOrderTx)
-	go bcast.Receiver(constants.HandledExternalOrderPort, handledExternalOrderRx)
-}
-
-func lookForChangeInPeers() {
-	for {
-		PeersInfo= <-peerUpdateCh
-		fmt.Println("Peers: ", PeersInfo.Peers)
-		/*
-		if(!reflect.DeepEqual(ps, PeersInfo)){
-			fmt.Println("Peersupdate: ", ps)
-			PeersInfo = ps
-		}
-		*/
-
-		if(len(PeersInfo.Lost) > 0){
-			handleLostElevator()
-		}
-	}
-}
-
-func transceiveQueues() {
-	go bcast.Transmitter(constants.QueuePort, queuesTx)
-	go bcast.Receiver(constants.QueuePort, queuesRx)
-}
-
-func chooseMasterSlave() {
-	smallestID := PeersInfo.Peers[0]
-
-	for i := 1; i < len(PeersInfo.Peers); i++ {
-		if PeersInfo.Peers[i] < smallestID {
-			smallestID = PeersInfo.Peers[i]
-		}
-	}
-
-	if Id == smallestID {
-		//you are master
-		//start masterBroadcast
-		Master = true
-		fmt.Println("master because of smallestID")
-
-	} else {
-		Master = false
-		fmt.Println("not master because of ID")
-	}
+	go peers.Transmitter(constants.PeersPort, Id, peerTxEnable)
+	go peers.Receiver(constants.PeersPort, peerUpdateCh)
 }
 
 func masterBroadcast() {
@@ -140,17 +91,74 @@ func masterBroadcast() {
 	}
 }
 
-func handleLostElevator() {
-	for i:= 0; i < len(PeersInfo.Lost); i++{
-		fmt.Println("Peer lost:", PeersInfo.Lost[i])
+func lookForChangeInPeers() {
+	for {
+		PeersInfo = <-peerUpdateCh
+		/*
+		if(!reflect.DeepEqual(ps, PeersInfo)){
+			fmt.Println("Peersupdate: ", ps)
+			PeersInfo = ps
+		}
+		*/
+
+		if(len(PeersInfo.Lost) > 0){
+			handleLostElevator()
+		}
+	}
+}
+
+func listenForMaster(){
+
+	masterRx = make(chan string,1)
+	go bcast.Receiver(constants.MasterPort, masterRx)
+}
+
+func checkIfMasterIsAlive() {
+	
+		noMasterTimer := time.NewTimer(time.Millisecond * 500)
+		select {
+		case <-noMasterTimer.C:
+			chooseMasterSlave()
+			break
+		case <-masterRx:
+			if(Master != true){
+				Master = false
+				fmt.Println("Slave")
+			}
+		}
+
+	
+}
+
+func chooseMasterSlave() {
+	smallestID := PeersInfo.Peers[0]
+
+	for i := 1; i < len(PeersInfo.Peers); i++ {
+		if PeersInfo.Peers[i] < smallestID {
+			smallestID = PeersInfo.Peers[i]
+		}
 	}
 
+	if Id == smallestID {
+
+		Master = true
+		fmt.Println("Master")
+
+	} else {
+		Master = false
+		fmt.Println("Slave")
+	}
+}
+
+
+
+func handleLostElevator() {
+
 	if testIfOnline() {
-		//Check if master lives - if not decide new master
 		L:
 			for {
 			    select {
-			    	//Emptying Ander's buffer
+			    	//Emptying Anders' buffer
 			    case <-masterRx:
 			    	time.Sleep(time.Millisecond*1)
 			    default:
@@ -176,46 +184,41 @@ func testIfOnline() bool {
 
 	localIP, err := localip.LocalIP()
 	if err != nil {
+
 		Online = false
 		fmt.Println("Offline", Id)
 		return false
+
 	} else if Id == "" {
+
 		//Set network ID if online
 		Id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+
 	}
+	
 	fmt.Println("Online", Id)
 	Online = true
 	return true
 }
 
-func listenForMaster(){
 
-	masterRx = make(chan string,1)
-	go bcast.Receiver(constants.MasterPort, masterRx)
+
+func transceiveElevatorHeading() {
+	go bcast.Transmitter(constants.HeadingPort, elevatorHeadingTx)
+	go bcast.Receiver(constants.HeadingPort, elevatorHeadingRx)
 }
 
-func checkIfMasterIsAlive() {
-	
-		noMasterTimer := time.NewTimer(time.Millisecond * 500)
-		select {
-		case <-noMasterTimer.C:
-			chooseMasterSlave()
-			break
-		case <-masterRx:
-			if(Master != true){
-				Master = false
-				fmt.Println("other master on network")
-			}
-		}
-
-	
+func transceiveNewExternalOrder() {
+	go bcast.Transmitter(constants.NewExternalOrderPort, externalOrderTx)
+	go bcast.Receiver(constants.NewExternalOrderPort, externalOrderRx)
 }
 
-func StartUDPPeersBroadcast() {
+func transceiveHandledExternalOrder() {
+	go bcast.Transmitter(constants.HandledExternalOrderPort, handledExternalOrderTx)
+	go bcast.Receiver(constants.HandledExternalOrderPort, handledExternalOrderRx)
+}
 
-	peerUpdateCh = make(chan peers.PeerUpdate)
-	peerTxEnable := make(chan bool)
-
-	go peers.Transmitter(constants.PeersPort, Id, peerTxEnable)
-	go peers.Receiver(constants.PeersPort, peerUpdateCh)
+func transceiveQueues() {
+	go bcast.Transmitter(constants.QueuePort, queuesTx)
+	go bcast.Receiver(constants.QueuePort, queuesRx)
 }

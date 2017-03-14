@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+
 	newOrderChannel := make(chan constants.Order,1)
 	newExternalOrderChannel := make(chan constants.Order,1)
 	nextFloorChannel := make(chan constants.Order,1)
@@ -31,7 +32,7 @@ func main() {
 		handledOrderChannel,
 		hallLightChannel)
 
-	fmt.Println("Init elev ok")
+	fmt.Println("Initialised elevator sucessfully")
 
 	network.InitNetwork(newOrderChannel,
 		peerDisconnectsChannel,
@@ -44,7 +45,7 @@ func main() {
 		handledExternalOrderTx,
 		handledExternalOrderRx)
 
-	fmt.Println("Init network ok")
+	fmt.Println("Initialised network sucessfully")
 
 	queue.InitQueue(newOrderChannel,
 		newExternalOrderChannel,
@@ -61,8 +62,9 @@ func main() {
 		handledExternalOrderTx,
 		handledExternalOrderRx)
 
-	fmt.Println("Init queue ok")
+	fmt.Println("Initialised queue sucessfully")
 
-	hopefullyRunSucessfullyForever := make(chan bool)
-	<-hopefullyRunSucessfullyForever
+	hopefullyRunForever := make(chan bool)
+	<-hopefullyRunForever
+
 }

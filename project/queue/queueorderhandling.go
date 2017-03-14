@@ -4,22 +4,27 @@ import (
 	constants "../constants"
 	elevator "../elevator"
 	network "../network"
-	"fmt"
 )
 
 // -----------New button orders----------------------------------
 func handleNewCabOrder() {
+
 	for {
 		
 		order := <-newOrderCh
+
 		if checkIfNewInternalOrder(order) {
+
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, order)
 			writeInternalQueueToFile()
 			updateElevatorNextOrder()
 			internalQueueMutex <- true
+
 		}
+
 	}
+
 }
 
 func handleExternalButtonOrder() {
@@ -29,22 +34,30 @@ func handleExternalButtonOrder() {
 	for {
 		
 		order := <-newExternalOrderCh
+
 		if checkIfNewExternalOrder(order) && !isOrderInNeedToBeAddedList(order) && network.Online == true {
+
 			<-ordersThatNeedToBeAddedMutex
 			ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 			ordersThatNeedToBeAddedMutex <- true
+
 		}
 
 	}
+
 }
 
 func isOrderInNeedToBeAddedList(order constants.Order) bool {
 	
 	<-ordersThatNeedToBeAddedMutex
+
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
+
 		if ordersThatNeedToBeAdded[i] == order {
+
 			ordersThatNeedToBeAddedMutex <- true
 			return true
+
 		}
 	}
 
@@ -54,7 +67,9 @@ func isOrderInNeedToBeAddedList(order constants.Order) bool {
 
 
 // -----------Completed order----------------------------------
+
 func handleCompletedCabOrder() {
+
 	//ordersThatAreHandled = make([]constants.Order)
 	go spamExternalOrdersThatAreHandled()
 
@@ -63,9 +78,11 @@ func handleCompletedCabOrder() {
 		order := <-handledOrderCh
 		//Check if order was external and that it is not already in handledOrderslist. If elev is off network there's no need telling others order has been handled
 		if order.Direction != constants.DirStop && !isOrderInHandledOrdersList(order) && network.Online == true {
+
 			<-ordersThatAreHandledMutex
 			ordersThatAreHandled = append(ordersThatAreHandled, order)
 			ordersThatAreHandledMutex <- true
+
 		}
 
 		<-internalQueueMutex
@@ -73,21 +90,29 @@ func handleCompletedCabOrder() {
 		writeInternalQueueToFile()
 		updateElevatorNextOrder()
 		internalQueueMutex <- true
+
 	}
+
 }
 
 func isOrderInHandledOrdersList(order constants.Order) bool {
 	
 	<-ordersThatAreHandledMutex
+
 	for i := 0; i < len(ordersThatAreHandled); i++ {
+
 		if ordersThatAreHandled[i] == order {
+
 			ordersThatAreHandledMutex <- true
 			return true
+
 		}
+
 	}
 
 	ordersThatAreHandledMutex <- true
 	return false
+
 }
 
 
@@ -95,98 +120,146 @@ func isOrderInHandledOrdersList(order constants.Order) bool {
 func checkIfNewExternalOrder(order constants.Order) bool {
 	
 	<-externalQueuesMutex
+
 	for j := 0; j < len(externalQueues[0]); j++ {
+
 		if externalQueues[0][j].Floor == order.Floor && externalQueues[0][j].Direction == order.Direction {
+
 			externalQueuesMutex <- true
 			return false
+
 		}
+
 	}
 
 	externalQueuesMutex <- true
 	return true
+
 }
 
 func checkIfNewInternalOrder(order constants.Order) bool {
 	
 	<-internalQueueMutex
+
 	for i := 0; i < len(internalQueue); i++ {
+
 		if internalQueue[i] == order {
+
 			internalQueueMutex <- true
 			return false
+
 		}
+
 	}
 
 	internalQueueMutex <- true
 	return true
+
 }
 
 func deleteOrderFromInternalQueue(order constants.Order) {
+
 	//Assume function that calls this has internalqueuemutex
 	
 	for i := 0; i < len(internalQueue); i++ {
+
 		if(order.Floor == internalQueue[i].Floor){
+
 			if order.Direction == constants.DirUp{
+
 				if(internalQueue[i].Direction == constants.DirUp || internalQueue[i].Direction == constants.DirStop){
 					internalQueue = append(internalQueue[:i], internalQueue[(i+1):]...)
 					i--
 				} 
+
 			} else if order.Direction == constants.DirDown{
+
 				if(internalQueue[i].Direction == constants.DirDown || internalQueue[i].Direction == constants.DirStop){
 					internalQueue = append(internalQueue[:i], internalQueue[(i+1):]...)
 					i--
 				} 
+
 			} else if order.Direction == constants.DirStop{
+
 				if elevator.Direction == constants.DirUp && internalQueue[i].Direction == constants.DirUp{
+
 					internalQueue = append(internalQueue[:i], internalQueue[(i+1):]...)
 					i--
+
 				} else if elevator.Direction == constants.DirDown && internalQueue[i].Direction == constants.DirDown{
+
 					internalQueue = append(internalQueue[:i], internalQueue[(i+1):]...)
 					i--
+
 				} else if internalQueue[i].Direction == constants.DirStop{
+
 					internalQueue = append(internalQueue[:i], internalQueue[(i+1):]...)
 					i--
+
 				}
+
 			}
+
 		}
+
 	}
+
 }
 
 func deleteOrderFromExternalQueue(order constants.Order) {
+
 	//Assume that externalqueuesmutex is taken in function that calls this
 	
 	for i:= 0; i < constants.QueueCopies; i++{
+
 		for j := 0; j < len(externalQueues[i]); j++ {
+
 			if externalQueues[i][j].Floor == order.Floor && externalQueues[i][j].Direction == order.Direction {
+
 				externalQueues[i] = append(externalQueues[i][:j], externalQueues[i][(j+1):]...)
-				break
+				break //When order is found there's no point in continuing the search
+
 			}
+
 		}
+
 	}
 
 }
 
 func addExternalOrdersForThisElevator() {
+
 	for i := 0; i < len(externalQueues[0]); i++ {
+
 		//Assuming order is new
 		newOrder := true
+
 		if externalQueues[0][i].ElevatorID == network.Id { 
-			if !checkIfNewInternalOrder(externalQueues[0][i]) { //Check if order already is in internalqueue
+
+			if !checkIfNewInternalOrder(externalQueues[0][i]) {
+
 				newOrder = false
 
-			}else if isOrderInHandledOrdersList(externalQueues[0][i]) { //Check if new external order has not just been handled
+			}else if isOrderInHandledOrdersList(externalQueues[0][i]) { 
+
 				newOrder = false
-				break
+
 			}
 
 			if newOrder == true {
+
 				<-internalQueueMutex
 				internalQueue = append(internalQueue, externalQueues[0][i])
 				writeInternalQueueToFile()
 				updateElevatorNextOrder()
 				internalQueueMutex <- true
+
 			}
+
 		}
+
 	}
+
 }
 
 // -----------Disconnected peer functions----------------------------------
@@ -195,40 +268,57 @@ func addExternalOrdersForThisElevator() {
 func disconnectedTakeAllExternalOrders() {
 	
 	<-externalQueuesMutex
+
 	for i := 0; i < len(externalQueues[0]); i++ {
+
 		if checkIfNewInternalOrder(externalQueues[0][i]) {
+
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, externalQueues[0][i])
 			internalQueueMutex <- true
+
 		}
+
 	}
+
 	// Clean external queue
 	for i := 0; i < constants.QueueCopies; i++ {
+
 		externalQueues[i] = externalQueues[i][:0]
+
 	}
+
 	externalQueuesMutex <- true
+
 }
 
 func masterRedistOrders(elevatorId string) {
 	
 	if network.Master == true {
+
 		<-externalQueuesMutex
 		<-ordersThatNeedToBeAddedMutex
-		//go through external queue and find orders for elevatorId
+
 		for i := 0; i < len(externalQueues[0]); i++ {
+
 			order := externalQueues[0][i]
+
 			if order.ElevatorID == elevatorId {
-				fmt.Println("Redistributing order: ", order)
-				order.ElevatorID = ""
+
 				deleteOrderFromExternalQueue(order)
+				order.ElevatorID = ""
 				ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
 				i--
+
 			}
+
 		}
 	
 		ordersThatNeedToBeAddedMutex <- true
 		externalQueuesMutex <- true
+
 	}
+
 }
 
 
@@ -236,7 +326,6 @@ func masterRedistOrders(elevatorId string) {
 
 func updateElevatorNextOrder() {
 	
-
 	if len(internalQueue) > 0 {
 
 		var bestFloorSoFar constants.Order
@@ -245,6 +334,7 @@ func updateElevatorNextOrder() {
 		for i := 0; i < len(internalQueue); i++ {
 
 			dist := findDistToFloor(internalQueue[i], elevator.Direction, elevator.LastFloor,internalQueue[i])
+
 			if dist < bestDistSoFar {
 
 				bestDistSoFar = dist
@@ -253,30 +343,39 @@ func updateElevatorNextOrder() {
 			}
 
 		}
-		fmt.Println("best order: ", bestFloorSoFar)
+
 		nextFloorCh <- bestFloorSoFar
+
 	} else {
-		nextFloorCh <- constants.Order{Floor: -1, Direction: constants.DirStop, ElevatorID: "-1"} //Send empty order, telling elevator there are no new orders
+
+		//Send order for floor "-1", telling elevator there are no new orders
+		nextFloorCh <- constants.Order{Floor: -1, Direction: constants.DirStop, ElevatorID: "-1"} 
+	
 	}
 
 }
 
 func masterChooseElevatorThatTakesOrder(order constants.Order) string {
+
 	var bestElevatorSoFar string
 	var bestDistSoFar int = 100
+
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {
+
 		currentElevator := headings[network.PeersInfo.Peers[i]]
-		fmt.Println("Evaluating elevator for order:", currentElevator)
-		fmt.Println("Evaluating elevator for order:", order)
 		dist := findDistToFloor(order, currentElevator.Direction, currentElevator.LastFloor, currentElevator.CurrentOrder)
-		fmt.Println("Dist calculated:", dist)
+
 		if dist < bestDistSoFar {
+
 			bestDistSoFar = dist
 			bestElevatorSoFar = currentElevator.Id
+
 		}
+
 	}
 
 	return bestElevatorSoFar
+
 }
 
 func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.ElevatorDirection, currentFloor int, currentOrder constants.Order) int {
@@ -285,43 +384,66 @@ func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.Ele
 	if elevatorDir == constants.DirUp {
 
 		if destinationOrder.Floor > currentFloor && (destinationOrder.Direction == constants.DirUp || destinationOrder.Direction == constants.DirStop) {
+
 			dist = destinationOrder.Floor - currentFloor
+
 		} else if destinationOrder.Floor > currentFloor && (destinationOrder.Direction == constants.DirDown) {
+
 			dist = ((constants.NumberOfFloors - 1) - currentFloor) + (constants.NumberOfFloors - 1) -  destinationOrder.Floor
+
 		} else if destinationOrder.Floor <= currentFloor && (destinationOrder.Direction == constants.DirDown || destinationOrder.Direction == constants.DirStop) {
+
 			dist = (constants.NumberOfFloors - 1) - currentFloor + (constants.NumberOfFloors - 1) - destinationOrder.Floor
+
 		} else if destinationOrder.Floor <= currentFloor && (destinationOrder.Direction == constants.DirUp) {
+
 			dist = (constants.NumberOfFloors - 1) - currentFloor + (constants.NumberOfFloors - 1) + destinationOrder.Floor
+
 		}
 
-		//Add 2 to dist because elevator needs to stop before handling this order
+		//Punish that elevator needs to stop before handling this order
 		if(destinationOrder.Floor > currentOrder.Floor){
 			dist += 1
 		}
 
 	} else if elevatorDir == constants.DirDown {
+
 		if destinationOrder.Floor < currentFloor && (destinationOrder.Direction == constants.DirDown || destinationOrder.Direction == constants.DirStop) {
+
 			dist = currentFloor - destinationOrder.Floor
+
 		} else if destinationOrder.Floor < currentFloor && (destinationOrder.Direction == constants.DirUp) {
+
 			dist = currentFloor + destinationOrder.Floor
+
 		} else if destinationOrder.Floor >= currentFloor && (destinationOrder.Direction == constants.DirUp || destinationOrder.Direction == constants.DirStop) {
+
 			dist = currentFloor + destinationOrder.Floor
+
 		} else if destinationOrder.Floor >= currentFloor && (destinationOrder.Direction == constants.DirDown) {
+
 			dist = currentFloor + (constants.NumberOfFloors - 1) + (constants.NumberOfFloors - destinationOrder.Floor)
+
 		}
 
-		//Add 2 to dist because elevator needs to stop before handling this order
+		//Punish that elevator needs to stop before handling this order
 		if(destinationOrder.Floor < currentOrder.Floor){
 			dist += 1
 		}
 
 	} else if elevatorDir == constants.DirStop{
+
 		if destinationOrder.Floor >= currentFloor{
+
 			dist = destinationOrder.Floor - currentFloor
+
 		} else if destinationOrder.Floor < currentFloor{
+
 			dist = currentFloor - destinationOrder.Floor
+
 		}
 	}
 
 	return dist
+
 }

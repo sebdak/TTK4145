@@ -47,6 +47,7 @@ func run() {
 		
 		switch state {
 		case constants.Initializing:
+
 			if(testElevator() == true){
 				go lookForOrderButtonPress()
 				go lookForNewQueueOrder()
@@ -58,6 +59,7 @@ func run() {
 			break
 
 		case constants.AtFloor:
+
 			if unexpeditedOrder == true {
 				moveTowardsOrderedFloor()
 				state = constants.Moving
@@ -68,17 +70,19 @@ func run() {
 		case constants.Moving:
 
 			secureElevatorIsMoving()
-
 			if LastFloor == CurrentOrder.Floor { 
 
 				orderedFloorReachedRoutine()
 				state = constants.AtFloor
+
 			}
 
 			break
 
 		case constants.Broken:
+
 			shutdownRoutine()
+
 			break
 		}
 
@@ -150,12 +154,16 @@ func lookForNewQueueOrder() {
 	for {
 		
 		order := <-nextFloorCh
-		if order.Floor == -1{
+		if order.Floor == -1 {
+
 			Direction = constants.DirStop //Internalqueue has no new orders
+
 		} else {
+
 			CurrentOrder = order
 			unexpeditedOrder = true
 			fmt.Println("New elevator order: ", CurrentOrder.Floor, CurrentOrder.Direction, Direction)
+
 		}
 	}
 }
@@ -164,32 +172,43 @@ func moveTowardsOrderedFloor() {
 	
 	setDirection()
 	driver.SetMotorDir(Direction)
+
 }
 
 func setDirection() {
 	
 	if LastFloor == 0 {
+
 		Direction = constants.DirUp
+
 	} else if LastFloor == constants.NumberOfFloors-1 {
+
 		Direction = constants.DirDown
+
 	} else if CurrentOrder.Floor > LastFloor{
+
 		Direction = constants.DirUp
+
 	} else if CurrentOrder.Floor < LastFloor{
+
 		Direction = constants.DirDown
+
 	} else if CurrentOrder.Floor == LastFloor{
+
 		Direction = constants.DirStop
+
 	}
 }
 
 func secureElevatorIsMoving() {
-	//start timer first
-	
+
 	failedToReachFloorTimer := time.NewTimer(time.Second * 12)
 
 	//lookForChangeInFloor will return false if the timer times out
 	if !lookForChangeInFloor(failedToReachFloorTimer) {
-		//change state to "Broken". maybe make it more precice later
+
 		state = constants.Broken
+
 	}
 }
 
@@ -198,19 +217,28 @@ func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 	for {
 		
 		currentFloorSignal := driver.GetFloorSensor()
+
 		if currentFloorSignal != -1 && (LastFloor != currentFloorSignal || CurrentOrder.Floor == currentFloorSignal){
+
 			LastFloor = currentFloorSignal
 			driver.SetFloorIndicator(LastFloor)
 			failedToReachFloorTimer.Stop()
 			return true
+
 		}
 
 		select {
+
 		case <-failedToReachFloorTimer.C:
+
 			return false
+
 		default:
+
 			//prevent timer from blocking
+
 		}
+
 		time.Sleep(time.Millisecond * 10)
 	}
 }
@@ -240,16 +268,20 @@ func lookForOrderButtonPress() {
 		for floor := 0; floor < constants.NumberOfFloors; floor++ {
 
 			if driver.GetButtonSignal(constants.ButtonCommand, floor) == 1 {
+
 				driver.SetButtonLamp(constants.ButtonCommand, floor, 1)
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirStop
 				newOrderCh <- newOrder
+
 			} else if driver.GetButtonSignal(constants.ButtonCallUp, floor) == 1 {
+
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirUp
 				newExternalOrderCh <- newOrder
 
 			} else if driver.GetButtonSignal(constants.ButtonCallDown, floor) == 1 {
+
 				newOrder.Floor = floor
 				newOrder.Direction = constants.DirDown
 				newExternalOrderCh <- newOrder
@@ -268,7 +300,9 @@ func updateHallLights() {
 
 		q := <-hallLightCh
 		if reflect.DeepEqual(q, qCopy) == false && len(q) > 0 { //To avoid setting lights all the time without receiving new external queue
+
 			qCopy = q 
+
 			for i := 0; i < constants.NumberOfFloors; i++ {
 
 				//Go through all up-hall-buttons
@@ -291,13 +325,16 @@ func updateHallLights() {
 					}
 				}
 			}
+			
 		} else if len(q) == 0 { //No ext. orders -> no lights should be lit
+
 			qCopy = q 
 			for i := 0; i < constants.NumberOfFloors; i++ {
 				//fmt.Println("Skrudde av alle lys fordi kølengden er 0")
 				driver.SetButtonLamp(constants.ButtonCallUp, i, 0)
 				driver.SetButtonLamp(constants.ButtonCallDown, i, 0)
 			}
+
 		}
 	}
 }

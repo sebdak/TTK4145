@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strconv"
 	"os"
-	"fmt"
 	"io/ioutil"
 	"io"
 	"strings"
@@ -43,6 +42,7 @@ var handledExternalOrderRx chan constants.Order
 
 
 func InitQueue(newOrderChannel chan constants.Order, newExternalOrderChannel chan constants.Order, nextFloorChannel chan constants.Order, handledOrderChannel chan constants.Order, peerDisconnectsChannel chan string, hallLightChannel chan []constants.Order, elevatorHeadingTxChannel chan constants.ElevatorHeading, elevatorHeadingRxChannel chan constants.ElevatorHeading, queuesTxChannel chan []constants.Order, queuesRxChannel chan []constants.Order, externalOrderTxChannel chan constants.Order, externalOrderRxChannel chan constants.Order, handledExternalOrderTxChannel chan constants.Order, handledExternalOrderRxChannel chan constants.Order) {
+	
 	//Add channels for modulecommunication
 	newOrderCh = newOrderChannel
 	nextFloorCh = nextFloorChannel
@@ -87,91 +87,136 @@ func InitQueue(newOrderChannel chan constants.Order, newExternalOrderChannel cha
 
 	go masterGetExternalOrdersThatAreHandled()
 	go masterGetExternalOrdersThatNeedToBeAdded()
+
 }
 
 func initQueues() {
 	//internalQueue = make([]constants.Order)
 
 	externalQueues = make([][]constants.Order, constants.QueueCopies)
+
 	for i := 0; i < constants.QueueCopies; i++ {
+
 		externalQueues[i] = make([]constants.Order, 1)
 		externalQueues[i] = []constants.Order{}
+
 	}
+
 }
 
 func compareAndFixExternalQueues() {
+
 	count := 0
 	totalCount := 0
 	var correctQueueIndex int
 	var majority int = constants.QueueCopies/2 + 1
 
 	for i := 0; i < constants.QueueCopies; i++ {
+
 		for j := 0; j < constants.QueueCopies; j++ {
+
 			if reflect.DeepEqual(externalQueues[i], externalQueues[j]) {
+
 				count++
+
 			}
+
 		}
 
 		// If current queue is equal more than 50% of the queue copies
 		if count >= majority {
+
 			correctQueueIndex = i
+
 		}
+
 		totalCount += count
 		count = 0
+
 	}
 
 	//if there was a mismatch
 	if totalCount < constants.QueueCopies*constants.QueueCopies {
+
 		for i := 0; i < constants.QueueCopies; i++ {
+
 			if i != correctQueueIndex {
+
 				externalQueues[i] = externalQueues[correctQueueIndex]
+
 			}
+
 		}
+
 	}
+
 }
 
 func writeInternalQueueToFile() {
+
 	fo, err := os.Create("internalQueue.txt")
-	if err != nil {
-	}
 	defer fo.Close()
 
-	_, err = io.Copy(fo, strings.NewReader(internalQueueToString()))
 	if err != nil {
+
+		fmt.Print(err)
+
+	} else {
+
+		_, err = io.Copy(fo, strings.NewReader(internalQueueToString()))
+
+	}
+
+	if err != nil {
+
+		//To avoid err is not used from compiler
+
 	}
 	
 }
 
-func readInternalQueueFromFile() {
-	b, err := ioutil.ReadFile("internalQueue.txt")
-    if err != nil {
-        fmt.Print(err)
-    } else {
-    	str := string(b)
-    	
-    	s := strings.Split(str, "\n")
-    	for i := 0; i < len(s)-1; i++{
-    		floor, _ := strconv.Atoi(s[i])
-    		order := constants.Order{Floor: floor, Direction: constants.DirStop, ElevatorID: network.Id}
-
-    		if checkIfNewInternalOrder(order) {
-    			//set lights
-    			driver.SetButtonLamp(constants.ButtonCommand, order.Floor, 1)
-    			newOrderCh <- order
-    		}
-    	}
-    }
-}
-
 func internalQueueToString() string {
+
 	var internalQueueString string;
 
 	for i := 0; i < len(internalQueue); i++ {
+
 		internalQueueString = internalQueueString + strconv.Itoa(internalQueue[i].Floor) + "\n"
+
 	}
 
 	return internalQueueString
 }
+
+func readInternalQueueFromFile() {
+
+	b, err := ioutil.ReadFile("internalQueue.txt")
+
+    if err == nil {
+
+    	ordersAsString := string(b)
+    	s := strings.Split(ordersAsString, "\n")
+
+    	for i := 0; i < len(s)-1; i++{
+
+    		floor, _ := strconv.Atoi(s[i])
+    		order := constants.Order{Floor: floor, Direction: constants.DirStop, ElevatorID: network.Id}
+
+    		if checkIfNewInternalOrder(order) {
+
+    			//set lights
+    			driver.SetButtonLamp(constants.ButtonCommand, order.Floor, 1)
+    			newOrderCh <- order
+    			
+    		}
+
+    	}
+
+    }
+
+}
+
+
 
 
 
