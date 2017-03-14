@@ -191,6 +191,7 @@ func checkIfMasterIsAlive() {
 		select {
 		case <-noMasterTimer.C:
 			chooseMasterSlave()
+			break
 		case <-masterRx:
 			if(Master != true){
 				Master = false
