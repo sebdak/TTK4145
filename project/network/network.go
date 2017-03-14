@@ -150,8 +150,9 @@ func handleLostElevator() {
 		L:
 			for {
 			    select {
+			    	//Emptying Ander's buffer
 			    case <-masterRx:
-			    	time.Sleep(time.Millisecond*10)
+			    	time.Sleep(time.Millisecond*1)
 			    default:
 			       break L
 			    }
