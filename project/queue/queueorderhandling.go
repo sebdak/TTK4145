@@ -218,10 +218,11 @@ func masterRedistOrders(elevatorId string) {
 		for i := 0; i < len(externalQueues[0]); i++ {
 			order := externalQueues[0][i]
 			if order.ElevatorID == elevatorId {
-	
+				fmt.Println("Redistributing order: ", order)
 				order.ElevatorID = ""
 				deleteOrderFromExternalQueue(order)
 				ordersThatNeedToBeAdded = append(ordersThatNeedToBeAdded, order)
+				i--
 			}
 		}
 	
