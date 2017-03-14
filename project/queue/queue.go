@@ -3,6 +3,7 @@ package queue
 import (
 	constants "../constants"
 	network "../network"
+	driver "../driver"
 	"reflect"
 	"strconv"
 	"os"
@@ -152,7 +153,13 @@ func readInternalQueueFromFile() {
     	s := strings.Split(str, "\n")
     	for i := 0; i < len(s)-1; i++{
     		floor, _ := strconv.Atoi(s[i])
-    		newOrderCh <- constants.Order{Floor: floor, Direction: constants.DirStop, ElevatorID: network.Id}
+    		order := constants.Order{Floor: floor, Direction: constants.DirStop, ElevatorID: network.Id}
+
+    		if checkIfNewInternalOrder(order) {
+    			//set lights
+    			driver.SetButtonLamp(constants.ButtonCommand, order.Floor, 1)
+    			newOrderCh <- order
+    		}
     	}
     }
 }
