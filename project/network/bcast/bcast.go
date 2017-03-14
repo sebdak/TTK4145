@@ -32,7 +32,6 @@ func Transmitter(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
-		fmt.Println("52")
 		chosen, value, _ := reflect.Select(selectCases)
 		buf, _ := json.Marshal(value.Interface())
 		conn.WriteTo([]byte(typeNames[chosen]+string(buf)), addr)
@@ -47,7 +46,6 @@ func Receiver(port int, chans ...interface{}) {
 	var buf [1024]byte
 	conn := conn.DialBroadcastUDP(port)
 	for {
-		fmt.Println("53")
 		n, _, _ := conn.ReadFrom(buf[0:])
 		for _, ch := range chans {
 			T := reflect.TypeOf(ch).Elem()
@@ -74,7 +72,6 @@ func Receiver(port int, chans ...interface{}) {
 //  - Why there is no `isMarshalable()` function in encoding/json is a mystery,
 //    so the tests on element type are hand-copied from `encoding/json/encode.go`
 func checkArgs(chans ...interface{}) {
-	fmt.Println("54")
 	n := 0
 	for range chans {
 		n++

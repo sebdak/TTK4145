@@ -100,7 +100,6 @@ func initQueues() {
 }
 
 func compareAndFixExternalQueues() {
-	fmt.Println("28")
 	count := 0
 	totalCount := 0
 	var correctQueueIndex int
@@ -132,7 +131,6 @@ func compareAndFixExternalQueues() {
 }
 
 func writeInternalQueueToFile() {
-	fmt.Println("29")
 	fo, err := os.Create("internalQueue.txt")
 	if err != nil {
 	}
@@ -145,7 +143,6 @@ func writeInternalQueueToFile() {
 }
 
 func readInternalQueueFromFile() {
-	fmt.Println("30")
 	b, err := ioutil.ReadFile("internalQueue.txt")
     if err != nil {
         fmt.Print(err)
@@ -167,7 +164,6 @@ func readInternalQueueFromFile() {
 }
 
 func internalQueueToString() string {
-	fmt.Println("31")
 	var internalQueueString string;
 
 	for i := 0; i < len(internalQueue); i++ {

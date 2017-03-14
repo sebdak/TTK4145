@@ -88,7 +88,6 @@ func transceiveHandledExternalOrder() {
 
 func lookForChangeInPeers() {
 	for {
-		fmt.Println("32")
 		PeersInfo= <-peerUpdateCh
 		fmt.Println("Peers: ", PeersInfo.Peers)
 		/*
@@ -110,7 +109,6 @@ func transceiveQueues() {
 }
 
 func chooseMasterSlave() {
-	fmt.Println("33")
 	smallestID := PeersInfo.Peers[0]
 
 	for i := 1; i < len(PeersInfo.Peers); i++ {
@@ -135,7 +133,6 @@ func masterBroadcast() {
 	masterTx := make(chan string)
 	go bcast.Transmitter(constants.MasterPort, masterTx)
 	for {
-		fmt.Println("34")
 		if Master == true {
 			masterTx <- Id
 		}
@@ -144,7 +141,6 @@ func masterBroadcast() {
 }
 
 func handleLostElevator() {
-	fmt.Println("35")
 	for i:= 0; i < len(PeersInfo.Lost); i++{
 		fmt.Println("Peer lost:", PeersInfo.Lost[i])
 	}
@@ -167,7 +163,7 @@ func handleLostElevator() {
 }
 
 func testIfOnline() bool {
-	fmt.Println("36")
+
 	localIP, err := localip.LocalIP()
 	if err != nil {
 		Online = false
@@ -183,13 +179,13 @@ func testIfOnline() bool {
 }
 
 func listenForMaster(){
-	fmt.Println("37")
+
 	masterRx = make(chan string,1)
 	go bcast.Receiver(constants.MasterPort, masterRx)
 }
 
 func checkIfMasterIsAlive() {
-		fmt.Println("38")
+	
 		noMasterTimer := time.NewTimer(time.Millisecond * 500)
 
 		select {
@@ -207,7 +203,7 @@ func checkIfMasterIsAlive() {
 }
 
 func StartUDPPeersBroadcast() {
-	fmt.Println("39")
+
 	peerUpdateCh = make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
 

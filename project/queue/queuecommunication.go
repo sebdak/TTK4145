@@ -5,13 +5,12 @@ import (
 	elevator "../elevator"
 	network "../network"
 	"time"
-	"fmt"
 )
 
 
 func masterSendExternalQueue() {
 	for {
-		fmt.Println("17")
+		
 		if network.Master == true { 
 			<-externalQueuesMutex
 			compareAndFixExternalQueues()
@@ -24,7 +23,7 @@ func masterSendExternalQueue() {
 
 func getExternalQueuesAndUpdate() {
 	for {
-		fmt.Println("18")
+		
 		extQueue := <-queuesRx
 		<-externalQueuesMutex
 		if (network.Master == false){
@@ -46,12 +45,13 @@ func getExternalQueuesAndUpdate() {
 		fmt.Println("ordersThatAreHandled: ", ordersThatAreHandled)
 		fmt.Println("----")
 		*/
+
 		externalQueuesMutex <- true
 	}
 }
 
 func updateOrdersThatNeedToBeAdded() {
-	fmt.Println("19")
+	
 	<-ordersThatNeedToBeAddedMutex
 	var indexesToDelete []int
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
@@ -74,7 +74,7 @@ func updateOrdersThatNeedToBeAdded() {
 }
 
 func updateOrdersThatAreHandled() {
-	fmt.Println("20")
+	
 	var indexesToDelete []int
 
 	<-ordersThatAreHandledMutex
@@ -104,7 +104,7 @@ func updateOrdersThatAreHandled() {
 
 func spamExternalOrdersThatAreHandled() {
 	for {
-		fmt.Println("21")
+		
 
 		if len(ordersThatAreHandled) > 0 {
 			<-ordersThatAreHandledMutex
@@ -121,7 +121,7 @@ func spamExternalOrdersThatAreHandled() {
 
 func spamExternalOrdersThatNeedToBeAdded() {
 	for {
-		fmt.Println("22")
+		
 		if len(ordersThatNeedToBeAdded) > 0 {
 			<-ordersThatNeedToBeAddedMutex
 			for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
@@ -130,13 +130,13 @@ func spamExternalOrdersThatNeedToBeAdded() {
 			ordersThatNeedToBeAddedMutex <- true
 		}
 
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 50)
 	}
 }
 
 func sendElevatorHeading() {
 	for {
-		fmt.Println("23")
+		
 		heading := constants.ElevatorHeading{
 			LastFloor:    elevator.LastFloor,
 			CurrentOrder: elevator.CurrentOrder,
@@ -157,7 +157,7 @@ func sendElevatorHeading() {
 func getElevatorHeadings() {
 	var heading constants.ElevatorHeading
 	for {
-		fmt.Println("24")
+		
 		heading = <-elevatorHeadingRx
 		headings[heading.Id] = heading
 	}
@@ -165,7 +165,7 @@ func getElevatorHeadings() {
 
 func masterGetExternalOrdersThatAreHandled() {
 	for {
-		fmt.Println("25")
+		
 		if network.Master == true {
 			order := <-handledExternalOrderRx
 			//Order may have been removed by master before slaves know it
@@ -175,12 +175,13 @@ func masterGetExternalOrdersThatAreHandled() {
 				externalQueuesMutex <- true
 			}
 		}
+		time.Sleep(time.Millisecond*40)
 	}
 }
 
 func masterGetExternalOrdersThatNeedToBeAdded() {
 	for {
-		fmt.Println("26")
+		
 		if network.Master == true {
 			order := <-externalOrderRx
 			//Check because master can have already handled order while slave still is spamming
@@ -193,13 +194,14 @@ func masterGetExternalOrdersThatNeedToBeAdded() {
 				externalQueuesMutex <- true
 			}
 		}
+		time.Sleep(time.Millisecond*40)
 	}
 
 }
 
 func handlePeerDisconnects() {
 	for {
-		fmt.Println("27")
+		
 		elevatorId := <-peerDisconnectsCh
 
 		if elevatorId == network.Id {

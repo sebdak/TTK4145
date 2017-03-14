@@ -10,7 +10,7 @@ import (
 // -----------New button orders----------------------------------
 func handleNewCabOrder() {
 	for {
-		fmt.Println("1")
+		
 		order := <-newOrderCh
 		if checkIfNewInternalOrder(order) {
 			<-internalQueueMutex
@@ -27,7 +27,7 @@ func handleExternalButtonOrder() {
 	go spamExternalOrdersThatNeedToBeAdded()
 
 	for {
-		fmt.Println("2")
+		
 		order := <-newExternalOrderCh
 		if checkIfNewExternalOrder(order) && !isOrderInNeedToBeAddedList(order) && network.Online == true {
 			<-ordersThatNeedToBeAddedMutex
@@ -39,7 +39,7 @@ func handleExternalButtonOrder() {
 }
 
 func isOrderInNeedToBeAddedList(order constants.Order) bool {
-	fmt.Println("3")
+	
 	<-ordersThatNeedToBeAddedMutex
 	for i := 0; i < len(ordersThatNeedToBeAdded); i++ {
 		if ordersThatNeedToBeAdded[i] == order {
@@ -59,7 +59,7 @@ func handleCompletedCabOrder() {
 	go spamExternalOrdersThatAreHandled()
 
 	for {
-		fmt.Println("4")
+		
 		order := <-handledOrderCh
 		//Check if order was external and that it is not already in handledOrderslist. If elev is off network there's no need telling others order has been handled
 		if order.Direction != constants.DirStop && !isOrderInHandledOrdersList(order) && network.Online == true {
@@ -77,7 +77,7 @@ func handleCompletedCabOrder() {
 }
 
 func isOrderInHandledOrdersList(order constants.Order) bool {
-	fmt.Println("5")
+	
 	<-ordersThatAreHandledMutex
 	for i := 0; i < len(ordersThatAreHandled); i++ {
 		if ordersThatAreHandled[i] == order {
@@ -93,7 +93,7 @@ func isOrderInHandledOrdersList(order constants.Order) bool {
 
 // -----------General functions on orders----------------------------------
 func checkIfNewExternalOrder(order constants.Order) bool {
-	fmt.Println("6")
+	
 	<-externalQueuesMutex
 	for j := 0; j < len(externalQueues[0]); j++ {
 		if externalQueues[0][j].Floor == order.Floor && externalQueues[0][j].Direction == order.Direction {
@@ -107,7 +107,7 @@ func checkIfNewExternalOrder(order constants.Order) bool {
 }
 
 func checkIfNewInternalOrder(order constants.Order) bool {
-	fmt.Println("7")
+	
 	<-internalQueueMutex
 	for i := 0; i < len(internalQueue); i++ {
 		if internalQueue[i] == order {
@@ -122,7 +122,7 @@ func checkIfNewInternalOrder(order constants.Order) bool {
 
 func deleteOrderFromInternalQueue(order constants.Order) {
 	//Assume function that calls this has internalqueuemutex
-	fmt.Println("8")
+	
 	for i := 0; i < len(internalQueue); i++ {
 		if(order.Floor == internalQueue[i].Floor){
 			if order.Direction == constants.DirUp{
@@ -153,7 +153,7 @@ func deleteOrderFromInternalQueue(order constants.Order) {
 
 func deleteOrderFromExternalQueue(order constants.Order) {
 	//Assume that externalqueuesmutex is taken in function that calls this
-	fmt.Println("9")
+	
 	for i:= 0; i < constants.QueueCopies; i++{
 		for j := 0; j < len(externalQueues[i]); j++ {
 			if externalQueues[i][j].Floor == order.Floor && externalQueues[i][j].Direction == order.Direction {
@@ -166,7 +166,6 @@ func deleteOrderFromExternalQueue(order constants.Order) {
 }
 
 func addExternalOrdersForThisElevator() {
-	fmt.Println("10")
 	for i := 0; i < len(externalQueues[0]); i++ {
 		//Assuming order is new
 		newOrder := true
@@ -194,7 +193,7 @@ func addExternalOrdersForThisElevator() {
 
 
 func disconnectedTakeAllExternalOrders() {
-	fmt.Println("11")
+	
 	<-externalQueuesMutex
 	for i := 0; i < len(externalQueues[0]); i++ {
 		if checkIfNewInternalOrder(externalQueues[0][i]) {
@@ -211,7 +210,7 @@ func disconnectedTakeAllExternalOrders() {
 }
 
 func masterRedistOrders(elevatorId string) {
-	fmt.Println("12")
+	
 	if network.Master == true {
 		<-externalQueuesMutex
 		<-ordersThatNeedToBeAddedMutex
@@ -235,7 +234,7 @@ func masterRedistOrders(elevatorId string) {
 // -----------Elevator next order stuff----------------------------------
 
 func updateElevatorNextOrder() {
-	fmt.Println("14")
+	
 
 	if len(internalQueue) > 0 {
 
@@ -262,7 +261,6 @@ func updateElevatorNextOrder() {
 }
 
 func masterChooseElevatorThatTakesOrder(order constants.Order) string {
-	fmt.Println("15")
 	var bestElevatorSoFar string
 	var bestDistSoFar int = 100
 	for i := 0; i < len(network.PeersInfo.Peers); i++ {
@@ -281,7 +279,6 @@ func masterChooseElevatorThatTakesOrder(order constants.Order) string {
 }
 
 func findDistToFloor(destinationOrder constants.Order, elevatorDir constants.ElevatorDirection, currentFloor int, currentOrder constants.Order) int {
-	fmt.Println("16")
 	dist := 100
 
 	if elevatorDir == constants.DirUp {

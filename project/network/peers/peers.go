@@ -15,7 +15,7 @@ type PeerUpdate struct {
 	Lost  []string
 }
 
-const interval = 100 * time.Millisecond
+const interval = 15 * time.Millisecond
 const timeout = 500 * time.Millisecond
 
 func Transmitter(port int, id string, transmitEnable <-chan bool) {
@@ -25,7 +25,7 @@ func Transmitter(port int, id string, transmitEnable <-chan bool) {
 
 	enable := true
 	for {
-		fmt.Println("40")
+	
 		select {
 		case enable = <-transmitEnable:
 		case <-time.After(interval):
@@ -37,7 +37,6 @@ func Transmitter(port int, id string, transmitEnable <-chan bool) {
 }
 
 func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
-	fmt.Println("30")
 	var buf [2048]byte
 	var p PeerUpdate
 	lastSeen := make(map[string]time.Time)
@@ -45,7 +44,7 @@ func Receiver(port int, peerUpdateCh chan<- PeerUpdate) {
 	conn := conn.DialBroadcastUDP(port)
 
 	for {
-		fmt.Println("41")
+
 		updated := false
 
 		conn.SetReadDeadline(time.Now().Add(interval))
