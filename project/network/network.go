@@ -147,7 +147,7 @@ func handleLostElevator() {
 
 	if testIfOnline() {
 		//Check if master lives - if not decide new master
-		time.Sleep(time.Millisecond*300)
+		time.Sleep(time.Millisecond*1000)
 		<- masterRx
 		checkIfMasterIsAlive()
 
