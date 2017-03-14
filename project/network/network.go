@@ -137,6 +137,7 @@ func masterBroadcast() {
 	for {
 		if Master == true {
 			masterTx <- Id
+			fmt.Println("Sender mastersignal")
 		}
 		time.Sleep(time.Millisecond * 50)
 	}

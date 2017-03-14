@@ -2,7 +2,14 @@ package queue
 
 import (
 	constants "../constants"
+	network "../network"
 	"reflect"
+	"strconv"
+	"os"
+	"fmt"
+	"io/ioutil"
+	"io"
+	"strings"
 )
 
 var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
@@ -66,6 +73,9 @@ func InitQueue(newOrderChannel chan constants.Order, newExternalOrderChannel cha
 	go handleExternalButtonOrder()
 	go handleCompletedCabOrder()
 
+	//readInternalQueueFromFile
+	readInternalQueueFromFile()
+
 	go sendElevatorHeading()
 	go getElevatorHeadings()
 
@@ -119,8 +129,43 @@ func compareAndFixExternalQueues() {
 	}
 }
 
+func writeInternalQueueToFile() {
+	fo, err := os.Create("internalQueue.txt")
+	if err != nil {
+	}
+	defer fo.Close()
 
+	_, err = io.Copy(fo, strings.NewReader(internalQueueToString()))
+	if err != nil {
+	}
+	
+}
 
+func readInternalQueueFromFile() {
+	
+	b, err := ioutil.ReadFile("internalQueue.txt")
+    if err != nil {
+        fmt.Print(err)
+    } else {
+    	str := string(b)
+    	
+    	s := strings.Split(str, "\n")
+    	for i := 0; i < len(s)-1; i++{
+    		floor, _ := strconv.Atoi(s[i])
+    		newOrderCh <- constants.Order{Floor: floor, Direction: constants.DirStop, ElevatorID: network.Id}
+    	}
+    }
+}
+
+func internalQueueToString() string {
+	var internalQueueString string;
+
+	for i := 0; i < len(internalQueue); i++ {
+		internalQueueString = internalQueueString + strconv.Itoa(internalQueue[i].Floor) + "\n"
+	}
+
+	return internalQueueString
+}
 
 
 

@@ -16,6 +16,7 @@ func handleNewCabOrder() {
 		if checkIfNewInternalOrder(order) {
 			<-internalQueueMutex
 			internalQueue = append(internalQueue, order)
+			writeInternalQueueToFile()
 			updateElevatorNextOrder()
 			internalQueueMutex <- true
 		}
@@ -69,6 +70,7 @@ func handleCompletedCabOrder() {
 
 		<-internalQueueMutex
 		deleteOrderFromInternalQueue(order)
+		writeInternalQueueToFile()
 		updateElevatorNextOrder()
 		internalQueueMutex <- true
 	}
@@ -175,6 +177,7 @@ func addExternalOrdersForThisElevator() {
 			if newOrder == true {
 				<-internalQueueMutex
 				internalQueue = append(internalQueue, externalQueues[0][i])
+				writeInternalQueueToFile()
 				updateElevatorNextOrder()
 				internalQueueMutex <- true
 			}
