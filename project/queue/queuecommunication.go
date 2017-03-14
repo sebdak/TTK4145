@@ -37,11 +37,13 @@ func getExternalQueuesAndUpdate() {
 		updateOrdersThatAreHandled()
 		//Update lights in elevator
 		hallLightCh <- externalQueues[0]
+		/*
 		fmt.Println("Externalqueue: ", externalQueues[0])
 		fmt.Println("Internalqueue: ", internalQueue)
 		fmt.Println("ordersThatNeedToBeAdded: ", ordersThatNeedToBeAdded)
 		fmt.Println("ordersThatAreHandled: ", ordersThatAreHandled)
 		fmt.Println("----")
+		*/
 		externalQueuesMutex <- true
 	}
 }

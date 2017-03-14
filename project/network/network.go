@@ -59,10 +59,9 @@ func InitNetwork(newOrderChannel chan constants.Order, peerDisconnectsChannel ch
 	//Update peers on network
 	go lookForChangeInPeers()
 
+	go listenForMaster()
 	//wait one second for peers to come online
 	time.Sleep(time.Second)
-
-	go listenForMaster()
     checkIfMasterIsAlive()
 
 	go transceiveElevatorHeading()
