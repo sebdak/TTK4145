@@ -151,6 +151,7 @@ func handleLostElevator() {
 			for {
 			    select {
 			    case <-masterRx:
+			    	time.Sleep(time.Millisecond*500)
 			    default:
 			       break L
 			    }
