@@ -9,10 +9,9 @@ import (
 func LocalIP() (string, error) {
 	fmt.Println("1")
 
-	select{
-		case conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53}):
-		break
-	}
+	//conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53}):
+
+	conn, err := DialTimeout("tcp4", []byte{8, 8, 8, 8}, time.Second)
 	
 	fmt.Println("11")
 	if err != nil {
