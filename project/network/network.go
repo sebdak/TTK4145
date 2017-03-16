@@ -156,6 +156,7 @@ func handleLostElevator() {
 	fmt.Println("Nå ble heisen tapt")
 
 	if testIfOnline() {
+		fmt.Println("Kom seg hit")
 		L:
 			for {
 			    select {
