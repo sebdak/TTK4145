@@ -212,7 +212,7 @@ func deleteOrderFromExternalQueue(order constants.Order) {
 			if externalQueues[i][j].Floor == order.Floor && externalQueues[i][j].Direction == order.Direction {
 
 				externalQueues[i] = append(externalQueues[i][:j], externalQueues[i][(j+1):]...)
-				break //When order is found there's no point in continuing the search
+				j--
 
 			}
 

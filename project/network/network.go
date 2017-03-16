@@ -152,7 +152,7 @@ func chooseMasterSlave() {
 	}
 
 	if Id == smallestID {
-
+		emptyBuffers()
 		Master = true
 		fmt.Println("Master")
 
@@ -160,6 +160,20 @@ func chooseMasterSlave() {
 		Master = false
 		fmt.Println("Slave")
 	}
+}
+
+func emptyBuffers(){
+	M:
+		//Emptying masterbuffer first
+		for {
+		    select {
+		    	
+		    case <-externalOrderRx:
+		    	time.Sleep(time.Millisecond*1)
+		    default:
+		       break M
+		    }
+		}
 }
 
 
