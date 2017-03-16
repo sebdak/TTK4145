@@ -9,7 +9,7 @@ import (
 func LocalIP() (string, error) {
 	fmt.Println("1")
 
-	switch{
+	select{
 		case conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53}):
 		break
 	}
