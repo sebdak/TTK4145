@@ -102,7 +102,7 @@ func lookForChangeInPeers() {
 		*/
 
 		//Coming online again
-		if len(PeersInfo.New) >0  && PeersInfo.New[0] == Id && Online = false{
+		if len(PeersInfo.New) > 0 && PeersInfo.New == Id && Online == false{
 			if(testIfOnline()){
 				checkIfMasterIsAlive()
 			}
