@@ -101,6 +101,13 @@ func lookForChangeInPeers() {
 		}
 		*/
 
+		//Coming online again
+		if(len(PeersInfo.New >0 ) && PeersInfo.New[0] == Id){
+			if(testIfOnline()){
+				checkIfMasterIsAlive()
+			}
+		}
+
 		if(len(PeersInfo.Lost) > 0){
 			handleLostElevator()
 		}
@@ -173,6 +180,7 @@ func handleLostElevator() {
 		}
 
 	} else {
+		fmt.Println("Slave")
 		Master = false
 		//Tell queue this elevator is offline
 		peerDisconnectsCh <- Id
