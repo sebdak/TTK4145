@@ -11,6 +11,7 @@ import (
 	"io"
 	"strings"
 	"sync"
+	"fmt"
 )
 
 var headings map[string]constants.ElevatorHeading = make(map[string]constants.ElevatorHeading)
@@ -23,7 +24,7 @@ var ordersThatAreHandled []constants.Order
 var internalQueueMutex = &sync.Mutex{}
 var externalQueuesMutex = &sync.Mutex{}
 var ordersThatNeedToBeAddedMutex = &sync.Mutex{}
-var ordersThatAreHandledMutex = &synd.Mutex{}
+var ordersThatAreHandledMutex = &sync.Mutex{}
 
 var hallLightCh chan []constants.Order
 var newOrderCh chan constants.Order
