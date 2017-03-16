@@ -8,7 +8,12 @@ import (
 
 func LocalIP() (string, error) {
 	fmt.Println("1")
-	conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53})
+	
+	switch{
+		case conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53})
+		break
+	}
+	
 	fmt.Println("11")
 	if err != nil {
 		return "", err
