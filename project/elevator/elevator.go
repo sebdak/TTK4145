@@ -246,9 +246,7 @@ func lookForChangeInFloor(failedToReachFloorTimer *time.Timer) bool {
 func orderedFloorReachedRoutine() {
 	
 	driver.SetMotorDir(constants.DirStop)
-	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0) //Cab order lights can be directly shut off by elevator
-	driver.SetButtonLamp(constants.ButtonCallUp, LastFloor, 0)
-	driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
+	setLights()
 
 	unexpeditedOrder = false
 
@@ -260,6 +258,22 @@ func orderedFloorReachedRoutine() {
 	waitAtFloorTimer := time.NewTimer(time.Second * 2)
 	<-waitAtFloorTimer.C
 	driver.SetDoorOpenLamp(0)
+}
+
+func setLights(){
+
+	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0)
+
+	if(CurrentOrder.Direction == constants.DirUp){
+
+		driver.SetButtonLamp(constants.ButtonCallUp, LastFloor, 0)
+
+	} else if (CurrentOrder.Direction == constants.DirDown){
+
+		driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
+
+	}
+
 }
 
 func lookForOrderButtonPress() {
