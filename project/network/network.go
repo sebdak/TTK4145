@@ -190,7 +190,7 @@ func handleLostElevator() {
 		}
 
 	} else {
-		fmt.Println("Slave")
+		fmt.Println("Slave test")
 		Master = false
 		//Tell queue this elevator is offline
 		peerDisconnectsCh <- Id
