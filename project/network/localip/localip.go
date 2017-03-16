@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 	"fmt"
+	"time"
 )
 
 func LocalIP() (string, error) {
@@ -11,7 +12,7 @@ func LocalIP() (string, error) {
 
 	//conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53}):
 
-	conn, err := DialTimeout("tcp4", []byte{8, 8, 8, 8}, time.Second)
+	conn, err := net.DialTimeout("tcp4", []byte{8, 8, 8, 8}, time.Second)
 	
 	fmt.Println("11")
 	if err != nil {
