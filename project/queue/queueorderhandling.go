@@ -205,19 +205,19 @@ func deleteOrderFromExternalQueue(order constants.Order) {
 
 	//Assume that externalqueuesmutex is taken in function that calls this
 	
-	for i := 0; i < len(externalQueues[0]); i++ {
+	for i:= 0; i < constants.QueueCopies; i++{
 
-		if externalQueues[0][i].Floor == order.Floor && externalQueues[0][i].Direction == order.Direction {
+		for j := 0; j < len(externalQueues[i]); j++ {
 
-			externalQueues[i] = append(externalQueues[0][:i], externalQueues[0][(i+1):]...)
-			i--
+			if externalQueues[i][j].Floor == order.Floor && externalQueues[i][j].Direction == order.Direction {
+
+				externalQueues[i] = append(externalQueues[i][:j], externalQueues[i][(j+1):]...)
+				break //When order is found there's no point in continuing the search
+
+			}
 
 		}
 
- 	}
- 
-	for i := 1; i < constants.QueueCopies;i++{
-		externalQueues[i] = externalQueues[0]
 	}
 
 }
