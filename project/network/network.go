@@ -185,7 +185,9 @@ func handleLostElevator() {
 
 func testIfOnline() bool {
 
+	fmt.Println("1")
 	localIP, err := localip.LocalIP()
+	fmt.Println("2")
 	if err != nil {
 
 		Online = false
