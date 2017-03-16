@@ -4,6 +4,7 @@ import (
 	constants "../constants"
 	elevator "../elevator"
 	network "../network"
+	"fmt"
 )
 
 // -----------New button orders----------------------------------
@@ -261,7 +262,7 @@ func addExternalOrdersForThisElevator() {
 
 
 func disconnectedTakeAllExternalOrders() {
-	
+	fmt.Println("Taking orders")
 	externalQueuesMutex.Lock()
 
 	for i := 0; i < len(externalQueues[0]); i++ {
@@ -282,6 +283,8 @@ func disconnectedTakeAllExternalOrders() {
 		externalQueues[i] = externalQueues[i][:0]
 
 	}
+
+	updateElevatorNextOrder()
 
 	externalQueuesMutex.Unlock()
 

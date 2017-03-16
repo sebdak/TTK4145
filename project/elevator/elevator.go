@@ -247,6 +247,8 @@ func orderedFloorReachedRoutine() {
 	
 	driver.SetMotorDir(constants.DirStop)
 	driver.SetButtonLamp(constants.ButtonCommand, LastFloor, 0) //Cab order lights can be directly shut off by elevator
+	driver.SetButtonLamp(constants.ButtonCallUp, LastFloor, 0)
+	driver.SetButtonLamp(constants.ButtonCallDown, LastFloor, 0)
 
 	unexpeditedOrder = false
 
