@@ -153,10 +153,8 @@ func chooseMasterSlave() {
 
 
 func handleLostElevator() {
-	fmt.Println("Nå ble heisen tapt")
 
 	if testIfOnline() {
-		fmt.Println("Kom seg hit")
 		L:
 			for {
 			    select {
@@ -175,7 +173,6 @@ func handleLostElevator() {
 		}
 
 	} else {
-		fmt.Println("Det var denne heisen som gikk tapt")
 		Master = false
 		//Tell queue this elevator is offline
 		peerDisconnectsCh <- Id
