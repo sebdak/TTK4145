@@ -5,6 +5,7 @@ import (
 	elevator "../elevator"
 	network "../network"
 	"time"
+	"fmt"
 )
 
 
@@ -49,6 +50,8 @@ func getExternalQueuesAndUpdate() {
 
 		//Update lights in elevator
 		hallLightCh <- externalQueues[0]
+
+		fmt.Println("Ext. queue: ", externalQueues[0])
 
 		externalQueuesMutex.Unlock()
 
