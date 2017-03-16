@@ -94,12 +94,6 @@ func masterBroadcast() {
 func lookForChangeInPeers() {
 	for {
 		PeersInfo = <-peerUpdateCh
-		/*
-		if(!reflect.DeepEqual(ps, PeersInfo)){
-			fmt.Println("Peersupdate: ", ps)
-			PeersInfo = ps
-		}
-		*/
 
 		//Coming online again
 		if len(PeersInfo.New) > 0 && PeersInfo.New == Id && Online == false{
@@ -121,7 +115,18 @@ func listenForMaster(){
 }
 
 func checkIfMasterIsAlive() {
-	
+		
+		L:
+		//Emptying masterbuffer first
+		for {
+		    select {
+		    	
+		    case <-masterRx:
+		    	time.Sleep(time.Millisecond*1)
+		    default:
+		       break L
+		    }
+		}
 		noMasterTimer := time.NewTimer(time.Millisecond * 500)
 		select {
 		case <-noMasterTimer.C:
@@ -162,16 +167,7 @@ func chooseMasterSlave() {
 func handleLostElevator() {
 
 	if testIfOnline() {
-		L:
-			for {
-			    select {
-			    	//Emptying Anders' buffer
-			    case <-masterRx:
-			    	time.Sleep(time.Millisecond*1)
-			    default:
-			       break L
-			    }
-			}
+
 		checkIfMasterIsAlive()
 
 		//Tell queue which elevators disconnected
