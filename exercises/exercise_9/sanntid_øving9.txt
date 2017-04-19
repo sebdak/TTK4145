@@ -1,0 +1,37 @@
+TASK 1:
+1. Why do we assign priorities to tasks?
+	- Because some task are more important than others, and must be executed within a certain time frame.
+
+2. What features must a scheduler have for it to be usable for real-time systems?
+	- the processes must allways meet their deadlines
+	- the process execution time must be less than its deadline
+
+
+TASK 2:
+separate attachment
+
+
+TASK 3:
+1. what is priority inversion?
+	- When a lower priority task blocks a higher priority task from executing by using 
+
+unbounded priority inversion
+	- the higher priority task may never get access to a resource because it is locked by another task.
+
+2. Does priority inheritance prevent deadlocks?
+	-no, you can still get deadlocks. 
+	Ex: if task 1 locks res A -> task 2 locks res B -> task 1 wants to access res B -> task 2 wants to access res A
+
+
+TASK 4:
+1. There are a number of assumptions/conditions that must be true for the utilization and response time tests to be usable (The "simple task model"). What are these assumptions? Comment on how realistic they are.
+	- Fixed set of tasks (No sporadic tasks. Not optimal, but can be worked around)
+	- Periodic tasks with known periods (Realistic in many systems)
+	- The tasks are independent (Completely realistic in an embedded system)
+	- Overheads, switching times can be ignored (Depends)
+	- Deadline == Period (Inflexible, but fair enough)
+	- Fixed Worst Case Execution Time. (Not realistic to know a tight (not overly conservative) estimate here)
+	- And in addition: Rate-Monotonic Priority ordering (Our choice, so ok)
+2. separate attachment
+3. separate attachment. Response-time. is the task set schedulabe?
+	- the test shows that the task set is schedulable. this is different from the utilization test in (2). response-time analysis is sufficient and necessary, while utilization test if only sufficient.
