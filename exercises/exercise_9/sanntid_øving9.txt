@@ -26,13 +26,14 @@ unbounded priority inversion
 TASK 4:
 1. There are a number of assumptions/conditions that must be true for the utilization and response time tests to be usable (The "simple task model"). What are these assumptions? Comment on how realistic they are.
 ****** denne er tatt fra lf. fant ikke noe litteratur ******** 
-	- Fixed set of tasks (No sporadic tasks. Not optimal, but can be worked around)
-	- Periodic tasks with known periods (Realistic in many systems)
-	- The tasks are independent (Completely realistic in an embedded system)
-	- Overheads, switching times can be ignored (Depends)
-	- Deadline == Period (Inflexible, but fair enough)
-	- Fixed Worst Case Execution Time. (Not realistic to know a tight (not overly conservative) estimate here)
-	- And in addition: Rate-Monotonic Priority ordering (Our choice, so ok)
+	-The application has a fixed set of processes
+	-All processes are periodic with known periods
+	-The processes are independent of each other
+	-All processes have deadline equal to their period
+	-All processes have a fixed worst-case execution time
+	-All context-switching costs etc. are ignored
+	-No internal suspension points (e.g., delay or blocking I/O)
+	-All processes execute on a single CPU
 2. separate attachment
 3. separate attachment. Response-time. is the task set schedulabe?
 	- the test shows that the task set is schedulable. this is different from the utilization test in (2). response-time analysis is sufficient and necessary, while utilization test if only sufficient.
