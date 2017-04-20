@@ -25,6 +25,7 @@ unbounded priority inversion
 
 TASK 4:
 1. There are a number of assumptions/conditions that must be true for the utilization and response time tests to be usable (The "simple task model"). What are these assumptions? Comment on how realistic they are.
+****** denne er tatt fra lf. fant ikke noe litteratur ******** 
 	- Fixed set of tasks (No sporadic tasks. Not optimal, but can be worked around)
 	- Periodic tasks with known periods (Realistic in many systems)
 	- The tasks are independent (Completely realistic in an embedded system)
